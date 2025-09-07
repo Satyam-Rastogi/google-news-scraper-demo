@@ -1,4 +1,4 @@
-# News Collector (Partial Implementation)
+# News Collector
 
 This is a simplified version of the News Collector that demonstrates the core functionality without including the full article scraping or scheduling features.
 
@@ -9,7 +9,7 @@ This is a simplified version of the News Collector that demonstrates the core fu
 - Save results in JSON or CSV format
 - Command-line interface for easy usage
 
-## Features Excluded
+## Features Excluded (currently working on)
 
 - Full article scraping (complete text, authors, publish date, etc.)
 - Image downloading
