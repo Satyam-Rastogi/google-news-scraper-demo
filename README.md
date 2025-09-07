@@ -1,6 +1,6 @@
 # News Collector
 
-This is a simplified version of the News Collector that demonstrates the core functionality without including the full article scraping or scheduling features.
+This version of the News Collector demonstrates the core functionality.
 
 ## Features Included
 
