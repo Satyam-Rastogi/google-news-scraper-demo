@@ -46,9 +46,9 @@ async def search_news_async(
             query=request.query,
             max_results=request.max_results,
             format_type=request.format,
-            language=request.language,
-            country=request.country,
-            time_period=request.time_period
+            language=request.language or config.default_language,
+            country=request.country or config.default_country,
+            time_period=request.time_period or config.default_time_period
         )
         
         return {
@@ -93,9 +93,9 @@ async def search_news_async_get(
             query=query,
             max_results=max_results,
             format_type=format,
-            language=language,
-            country=country,
-            time_period=time_period
+            language=language or config.default_language,
+            country=country or config.default_country,
+            time_period=time_period or config.default_time_period
         )
         
         return {
@@ -140,9 +140,9 @@ async def search_news_batch(
             queries=queries,
             max_results=max_results,
             format_type=format_type,
-            language=language,
-            country=country,
-            time_period=time_period
+            language=language or config.default_language,
+            country=country or config.default_country,
+            time_period=time_period or config.default_time_period
         )
         
         return {

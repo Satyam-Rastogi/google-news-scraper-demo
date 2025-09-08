@@ -21,6 +21,7 @@ Examples:
   
   # Run Celery worker
   python main.py --worker
+  python main.py --worker --foreground  # See logs in terminal
   
   # Run Celery beat scheduler
   python main.py --beat
@@ -44,6 +45,8 @@ Examples:
                         help="Worker concurrency (default: 2)")
     parser.add_argument("--port", type=int, default=5555,
                         help="Flower port (default: 5555)")
+    parser.add_argument("--foreground", action="store_true",
+                        help="Run worker in foreground to see logs in terminal")
     
     args = parser.parse_args()
     
@@ -75,7 +78,7 @@ Examples:
         
         print(f"🔄 Starting Celery worker for queue: {args.queue}")
         manager = WorkerManager()
-        manager.start_worker(queue=args.queue, concurrency=args.concurrency)
+        manager.start_worker(queue=args.queue, concurrency=args.concurrency, foreground=args.foreground)
         
     elif args.beat:
         # Run Celery beat scheduler

@@ -20,7 +20,8 @@ class WorkerManager:
         queue: str = "default",
         concurrency: int = 4,
         hostname: Optional[str] = None,
-        loglevel: str = "info"
+        loglevel: str = "info",
+        foreground: bool = False
     ) -> subprocess.Popen:
         """
         Start a Celery worker
@@ -49,15 +50,26 @@ class WorkerManager:
         logger.info(f"Starting Celery worker: {' '.join(cmd)}")
         
         try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            self.worker_processes.append(process)
-            logger.info(f"Worker started with PID: {process.pid}")
-            return process
+            if foreground:
+                # Run in foreground - logs will be visible in terminal
+                process = subprocess.Popen(
+                    cmd,
+                    text=True
+                )
+                # Don't add to worker_processes list when running in foreground
+                logger.info(f"Worker started in foreground with PID: {process.pid}")
+                return process
+            else:
+                # Run in background - capture output
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                self.worker_processes.append(process)
+                logger.info(f"Worker started with PID: {process.pid}")
+                return process
             
         except Exception as e:
             logger.error(f"Failed to start worker: {e}")

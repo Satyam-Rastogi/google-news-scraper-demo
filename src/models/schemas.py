@@ -27,6 +27,9 @@ class NewsSearchRequest(BaseModel):
     query: str = Field(..., description="Search query", min_length=1, max_length=200)
     format: Optional[str] = Field("json", description="Output format", pattern="^(json|csv)$")
     max_results: Optional[int] = Field(50, description="Maximum number of results", ge=1, le=100)
+    language: Optional[str] = Field("en", description="Language code")
+    country: Optional[str] = Field("US", description="Country code")
+    time_period: Optional[str] = Field("24h", description="Time period for search")
 
 
 class NewsSearchResponse(BaseModel):
