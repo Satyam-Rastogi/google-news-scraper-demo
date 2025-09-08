@@ -1,0 +1,57 @@
+2025-09-08 20:58:07,688 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:00:04,918 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:00:15,002 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:02:05,291 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:03:44,820 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:03:52,964 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:04:08,845 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:04:58,481 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:04:58,573 - src.common.router - INFO - Creating versioned router: /api/v1/news (version: v1)
+2025-09-08 21:04:58,581 - src.common.router - INFO - Creating versioned router: /api/v1/health (version: v1)
+2025-09-08 21:04:58,581 - src.common.router - INFO - Creating legacy router: /health
+2025-09-08 21:04:58,586 - src.common.utils.router - INFO - Creating versioned router: /api/v1/artifacts (version: v1)
+2025-09-08 21:04:58,596 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 21:04:58,596 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 21:05:15,958 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 21:05:16,037 - src.common.router - INFO - Creating versioned router: /api/v1/news (version: v1)
+2025-09-08 21:05:16,045 - src.common.router - INFO - Creating versioned router: /api/v1/health (version: v1)
+2025-09-08 21:05:16,045 - src.common.router - INFO - Creating legacy router: /health
+2025-09-08 21:05:16,047 - src.common.utils.router - INFO - Creating versioned router: /api/v1/artifacts (version: v1)
+2025-09-08 21:05:16,054 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 21:05:16,054 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:48:41,054 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 22:48:41,190 - src.common.router - INFO - Creating versioned router: /api/v1/news (version: v1)
+2025-09-08 22:48:41,200 - src.common.router - INFO - Creating versioned router: /api/v1/health (version: v1)
+2025-09-08 22:48:41,201 - src.common.router - INFO - Creating legacy router: /health
+2025-09-08 22:48:41,203 - src.common.utils.router - INFO - Creating versioned router: /api/v1/artifacts (version: v1)
+2025-09-08 22:48:41,211 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:48:41,211 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:48:53,378 - src.workers.worker_manager - INFO - Starting Celery worker: celery -A src.workers.celery_app:celery_app worker --loglevel info --concurrency 2 --queues news_scraping
+2025-09-08 22:48:53,379 - src.workers.worker_manager - INFO - Worker started with PID: 1145454
+2025-09-08 22:56:38,295 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 22:56:38,429 - src.common.router - INFO - Creating versioned router: /api/v1/news (version: v1)
+2025-09-08 22:56:38,438 - src.common.router - INFO - Creating versioned router: /api/v1/health (version: v1)
+2025-09-08 22:56:38,438 - src.common.router - INFO - Creating legacy router: /health
+2025-09-08 22:56:38,440 - src.common.utils.router - INFO - Creating versioned router: /api/v1/artifacts (version: v1)
+2025-09-08 22:56:38,449 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:56:38,449 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:56:57,695 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 22:56:57,789 - src.common.router - INFO - Creating versioned router: /api/v1/news (version: v1)
+2025-09-08 22:56:57,795 - src.common.router - INFO - Creating versioned router: /api/v1/health (version: v1)
+2025-09-08 22:56:57,796 - src.common.router - INFO - Creating legacy router: /health
+2025-09-08 22:56:57,797 - src.common.utils.router - INFO - Creating versioned router: /api/v1/artifacts (version: v1)
+2025-09-08 22:56:57,805 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:56:57,805 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:57:07,420 - src.workers.celery_app - INFO - Celery application configured successfully
+2025-09-08 22:57:07,527 - src.common.router - INFO - Creating versioned router: /api/v1/news (version: v1)
+2025-09-08 22:57:07,536 - src.common.router - INFO - Creating versioned router: /api/v1/health (version: v1)
+2025-09-08 22:57:07,536 - src.common.router - INFO - Creating legacy router: /health
+2025-09-08 22:57:07,538 - src.common.utils.router - INFO - Creating versioned router: /api/v1/artifacts (version: v1)
+2025-09-08 22:57:07,547 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:57:07,547 - src.api.main - INFO - FastAPI application created with version 1.0.0
+2025-09-08 22:57:12,655 - src.workers.worker_manager - INFO - Starting Celery worker: celery -A src.workers.celery_app:celery_app worker --loglevel info --concurrency 2 --queues news_scraping
+2025-09-08 22:57:12,655 - src.workers.worker_manager - INFO - Worker started with PID: 28857
+2025-09-08 22:58:17,332 - src.api.routes.news - INFO - Starting async news search for query: new  related llm   
+2025-09-08 22:58:17,332 - src.api.routes.news - INFO - Starting async news search for query: new  related llm   
+2025-09-08 22:58:17,340 - src.api.routes.news - ERROR - Failed to start async news search: 'NewsSearchRequest' object has no attribute 'language'
+2025-09-08 22:58:17,340 - src.api.routes.news - ERROR - Failed to start async news search: 'NewsSearchRequest' object has no attribute 'language'

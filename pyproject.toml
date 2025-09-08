@@ -1,0 +1,39 @@
+[project]
+name = "news-mcp-server"
+version = "0.1.0"
+description = "News MCP Server - Provides news scraping services via MCP protocol with SSE transport"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.2",
+    "mcp>=1.0.0",
+    "fastmcp>=0.1.0",
+    "uvicorn>=0.24.0",
+    "starlette>=0.27.0",
+    "pydantic>=2.5.0",
+    "python-dotenv>=1.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
