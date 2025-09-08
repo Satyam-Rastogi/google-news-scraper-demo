@@ -36,22 +36,22 @@ class CallbackTask(Task):
 def scrape_news_async(
     self,
     query: str,
-    max_results: int = 10,
-    format_type: str = "json",
-    language: str = "en",
-    country: str = "US",
-    time_period: str = "24h"
+    max_results: int = None,
+    format_type: str = None,
+    language: str = None,
+    country: str = None,
+    time_period: str = None
 ) -> Dict:
     """
     Asynchronously scrape news articles
     
     Args:
         query: Search query
-        max_results: Maximum number of results
-        format_type: Output format (json, csv, excel)
-        language: Language code
-        country: Country code
-        time_period: Time period for search
+        max_results: Maximum number of results (uses config default if None)
+        format_type: Output format (uses config default if None)
+        language: Language code (uses config default if None)
+        country: Country code (uses config default if None)
+        time_period: Time period for search (uses config default if None)
     
     Returns:
         Dict with task result and file paths
@@ -119,11 +119,11 @@ def scrape_news_async(
 def scrape_multiple_queries(
     self,
     queries: List[str],
-    max_results: int = 10,
-    format_type: str = "json",
-    language: str = "en",
-    country: str = "US",
-    time_period: str = "24h"
+    max_results: int = None,
+    format_type: str = None,
+    language: str = None,
+    country: str = None,
+    time_period: str = None
 ) -> Dict:
     """
     Scrape news for multiple queries in parallel
@@ -204,7 +204,7 @@ def export_articles(
     self,
     articles: List[Dict],
     query: str,
-    format_type: str = "json"
+    format_type: str = None
 ) -> Dict:
     """
     Export articles to specified format

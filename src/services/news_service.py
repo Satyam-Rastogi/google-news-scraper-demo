@@ -134,27 +134,34 @@ class NewsService:
     async def scrape_news_async(
         self,
         query: str,
-        max_results: int = 10,
-        format_type: str = "json",
-        language: str = "en",
-        country: str = "US",
-        time_period: str = "24h"
+        max_results: int = None,
+        format_type: str = None,
+        language: str = None,
+        country: str = None,
+        time_period: str = None
     ) -> Dict:
         """
         Asynchronously scrape news articles (for Celery tasks)
         
         Args:
             query: Search query
-            max_results: Maximum number of results
-            format_type: Output format (json, csv, excel)
-            language: Language code
-            country: Country code
-            time_period: Time period for search
+            max_results: Maximum number of results (uses config default if None)
+            format_type: Output format (uses config default if None)
+            language: Language code (uses config default if None)
+            country: Country code (uses config default if None)
+            time_period: Time period for search (uses config default if None)
         
         Returns:
             Dict with articles and metadata
         """
         try:
+            # Use config defaults if not provided
+            max_results = max_results or config.default_max_results
+            format_type = format_type or config.default_format_type
+            language = language or config.default_language
+            country = country or config.default_country
+            time_period = time_period or config.default_time_period
+            
             self.logger.info(f"Starting async news scraping for query: {query}")
             
             # Scrape HTML content
@@ -205,22 +212,22 @@ class NewsService:
     async def scrape_multiple_queries_async(
         self,
         queries: List[str],
-        max_results: int = 10,
-        format_type: str = "json",
-        language: str = "en",
-        country: str = "US",
-        time_period: str = "24h"
+        max_results: int = None,
+        format_type: str = None,
+        language: str = None,
+        country: str = None,
+        time_period: str = None
     ) -> Dict[str, Dict]:
         """
         Asynchronously scrape news for multiple queries
         
         Args:
             queries: List of search queries
-            max_results: Maximum number of results per query
-            format_type: Output format
-            language: Language code
-            country: Country code
-            time_period: Time period for search
+            max_results: Maximum number of results per query (uses config default if None)
+            format_type: Output format (uses config default if None)
+            language: Language code (uses config default if None)
+            country: Country code (uses config default if None)
+            time_period: Time period for search (uses config default if None)
         
         Returns:
             Dict with results for each query
@@ -253,7 +260,7 @@ class NewsService:
         self,
         articles: List[Dict],
         query: str,
-        format_type: str = "json"
+        format_type: str = None
     ) -> Dict:
         """
         Asynchronously export articles to specified format
@@ -261,12 +268,15 @@ class NewsService:
         Args:
             articles: List of article dictionaries
             query: Search query for naming
-            format_type: Export format (json, csv, excel)
+            format_type: Export format (uses config default if None)
         
         Returns:
             Dict with export result and file path
         """
         try:
+            # Use config default if not provided
+            format_type = format_type or config.default_format_type
+            
             self.logger.info(f"Starting async export for query: {query}")
             
             # Save to artifacts

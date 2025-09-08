@@ -8,6 +8,11 @@ from typing import Optional
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
+
+"""
+Constants
+"""
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -40,6 +45,12 @@ class AppConfig:
     max_results_limit: int = 100
     request_timeout: int = 30
     request_delay: float = 1.0
+    
+    # Default values for news scraping
+    default_language: str = "en"
+    default_country: str = "US"
+    default_time_period: str = "24h"
+    default_format_type: str = "json"
     
     # Output Configuration
     default_output_format: str = "json"

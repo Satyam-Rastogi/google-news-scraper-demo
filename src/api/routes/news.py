@@ -15,6 +15,7 @@ from ...workers.tasks.news_tasks import (
 )
 from ...common.logger import get_logger
 from ...common.router import create_versioned_router
+from ...common.config import config
 
 router = create_versioned_router(prefix="/news", tags=["news"])
 logger = get_logger(__name__)
@@ -43,11 +44,11 @@ async def search_news_async(
         # Start Celery task
         task = scrape_news_async.delay(
             query=request.query,
-            max_results=request.max_results or 50,
-            format_type=request.format or "json",
-            language=request.language or "en",
-            country=request.country or "US",
-            time_period=request.time_period or "24h"
+            max_results=request.max_results,
+            format_type=request.format,
+            language=request.language,
+            country=request.country,
+            time_period=request.time_period
         )
         
         return {
@@ -66,11 +67,11 @@ async def search_news_async(
 @router.get("/search/async")
 async def search_news_async_get(
     query: str,
-    format: str = "json",
-    max_results: int = 50,
-    language: str = "en",
-    country: str = "US",
-    time_period: str = "24h"
+    format: str = None,
+    max_results: int = None,
+    language: str = None,
+    country: str = None,
+    time_period: str = None
 ) -> Dict:
     """
     Start async news scraping task (GET endpoint)
@@ -113,11 +114,11 @@ async def search_news_async_get(
 @router.post("/search/batch")
 async def search_news_batch(
     queries: List[str],
-    max_results: int = 10,
-    format_type: str = "json",
-    language: str = "en",
-    country: str = "US",
-    time_period: str = "24h"
+    max_results: int = None,
+    format_type: str = None,
+    language: str = None,
+    country: str = None,
+    time_period: str = None
 ) -> Dict:
     """
     Start batch news scraping for multiple queries
@@ -161,7 +162,7 @@ async def search_news_batch(
 async def export_articles_task(
     articles: List[Dict],
     query: str,
-    format_type: str = "json"
+    format_type: str = None
 ) -> Dict:
     """
     Start async article export task

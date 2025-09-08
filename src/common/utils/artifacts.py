@@ -100,7 +100,7 @@ class ArtifactsManager:
                      artifact_type: ArtifactType = "scraped",
                      timestamp: Optional[datetime] = None) -> Path:
         """
-        Get full file path for saving artifacts
+        Get full file path for saving artifacts with timestamp-based organization
         
         Args:
             query: Search query
@@ -109,14 +109,21 @@ class ArtifactsManager:
             timestamp: Timestamp for filename
             
         Returns:
-            Full file path
+            Full file path with timestamp folder organization
         """
+        if timestamp is None:
+            timestamp = datetime.now()
+        
+        # Create timestamp-based folder structure
+        date_folder = timestamp.strftime("%Y-%m-%d")
+        time_folder = timestamp.strftime("%H-%M-%S")
+        
         if artifact_type in ["scraped", "processed", "raw"]:
-            base_path = self.get_data_path(artifact_type)
+            base_path = self.get_data_path(artifact_type) / date_folder / time_folder
         elif artifact_type == "exports":
-            base_path = self.get_export_path(format_type)
+            base_path = self.get_export_path(format_type) / date_folder / time_folder
         else:
-            base_path = self.base_dir / artifact_type
+            base_path = self.base_dir / artifact_type / date_folder / time_folder
         
         filename = self.generate_filename(query, format_type, artifact_type, timestamp)
         return base_path / filename
@@ -170,7 +177,7 @@ class ArtifactsManager:
                       artifact_type: ArtifactType = "scraped",
                       format_type: Optional[str] = None) -> list[Path]:
         """
-        List artifacts in a specific directory
+        List artifacts in a specific directory (recursively for timestamp folders)
         
         Args:
             artifact_type: Type of artifacts to list
@@ -192,9 +199,15 @@ class ArtifactsManager:
         if not base_path.exists():
             return []
         
-        files = list(base_path.glob("*"))
+        # Recursively find all files in timestamp folders
         if format_type:
-            files = [f for f in files if f.suffix == f".{format_type}"]
+            pattern = f"**/*.{format_type}"
+        else:
+            pattern = "**/*"
+        
+        files = list(base_path.glob(pattern))
+        # Filter out directories
+        files = [f for f in files if f.is_file()]
         
         return sorted(files, key=lambda x: x.stat().st_mtime, reverse=True)
     
