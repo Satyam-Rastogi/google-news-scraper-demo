@@ -1,0 +1,15 @@
+[project]
+name = "google-news-scraper-demo"
+version = "0.1.0"
+description = "Google News Scraper with FastAPI Backend"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "beautifulsoup4>=4.13.5",
+    "requests>=2.32.5",
+    "python-multipart>=0.0.6",
+    "python-dotenv>=1.0.0",
+]
