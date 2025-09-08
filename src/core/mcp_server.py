@@ -22,12 +22,12 @@ from starlette.routing import Mount, Route
 import uvicorn
 
 # Import configurations and tools
-from src.common.config.mcp_config import (
+from common.config.mcp_config import (
     LOGGING_CONFIG,
     MCP_HOST,
     NEWS_MCP_PORT
 )
-from src.mcp_tools.news_tools import (
+from mcp_tools.news_tools import (
     search_news,
     get_news_titles,
     save_news,
@@ -106,24 +106,32 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     """Create a Starlette app with SSE transport for the MCP server."""
     sse = SseServerTransport("/messages/")
 
-    async def handle_sse(request: Request) -> None:
-        async with sse.connect_sse(
-            request.scope,
-            request.receive,
-            request._send,
-        ) as (read_stream, write_stream):
-            await mcp_server.run(
-                read_stream,
-                write_stream,
-                mcp_server.create_initialization_options(),
-            )
+    async def handle_sse(request: Request):
+        try:
+            async with sse.connect_sse(
+                request.scope,
+                request.receive,
+                request._send,
+            ) as (read_stream, write_stream):
+                await mcp_server.run(
+                    read_stream,
+                    write_stream,
+                    mcp_server.create_initialization_options(),
+                )
+        except Exception as e:
+            logger.error(f"Error in SSE handler: {e}")
+            raise
+
+    # Create the messages app
+    messages_app = sse.handle_post_message if hasattr(sse, 'handle_post_message') else None
+    
+    routes = [Route("/sse", endpoint=handle_sse)]
+    if messages_app:
+        routes.append(Mount("/messages/", app=messages_app))
 
     return Starlette(
         debug=debug,
-        routes=[
-            Route("/sse", endpoint=handle_sse),
-            Mount("/messages/", app=sse.handle_post_message),
-        ],
+        routes=routes,
     )
 
 def main():

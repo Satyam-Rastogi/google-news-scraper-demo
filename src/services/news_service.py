@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 """
-News Helper Service - Handles news scraping and processing logic
+News Service - Main service for news scraping operations
 """
 
 from typing import List, Dict, Any, Optional
-from pathlib import Path
-import json
-import csv
-from datetime import datetime
-
-
 from services.google_news_scraper import GoogleNewsScraper
 from services.news_parser import ArticleParser
 from common.config.mcp_config import OUTPUT_DIR, DEFAULT_MAX_RESULTS
@@ -25,11 +19,11 @@ from common.utils.exceptions import (
 
 logger = get_logger(__name__)
 
-class NewsHelper:
-    """Helper class for news operations"""
+class NewsService:
+    """Main service class for news operations"""
     
     def __init__(self):
-        """Initialize news helper"""
+        """Initialize news service with scraper and parser"""
         self.scraper = GoogleNewsScraper()
         self.parser = ArticleParser()
     
@@ -124,15 +118,18 @@ class NewsHelper:
         OUTPUT_DIR.mkdir(exist_ok=True)
         
         # Create filename based on query and timestamp
+        from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_query = query.replace(' ', '_')
         filename = f"{safe_query}_{timestamp}.{format_type}"
         filepath = OUTPUT_DIR / filename
         
         if format_type == 'json':
+            import json
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(articles, f, indent=2, ensure_ascii=False)
         else:  # csv
+            import csv
             fieldnames = ['title', 'link', 'snippet']
             with open(filepath, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -145,5 +142,5 @@ class NewsHelper:
             message=f"Saved {len(articles)} articles to {filepath}"
         )
 
-# Create a default helper instance
-news_helper = NewsHelper()
+# Create a default service instance
+news_service = NewsService()

@@ -11,10 +11,10 @@ import logging.config
 from pathlib import Path
 
 # Add the src directory to the path
-sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent / "src"))
 
-from src.common.config.mcp_config import LOGGING_CONFIG, MCP_HOST, NEWS_MCP_PORT
-from src.core.mcp_server import main as mcp_main
+from common.config.mcp_config import LOGGING_CONFIG, MCP_HOST, NEWS_MCP_PORT
+from core.mcp_server import main as mcp_main
 
 # Configure logging
 logging.config.dictConfig(LOGGING_CONFIG)

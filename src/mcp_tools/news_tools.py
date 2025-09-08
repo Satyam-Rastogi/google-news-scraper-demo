@@ -6,8 +6,8 @@ News MCP Tools - MCP tool definitions for news scraping
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
-from src.common.utils.news_helper import news_helper
-from src.common.utils.logger import get_logger
+from services.news_service import news_service
+from common.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -36,7 +36,7 @@ def search_news(request: NewsSearchRequest) -> NewsSearchResponse:
     try:
         logger.info(f"Searching news with query: {request.query}")
         
-        result = news_helper.search_news(
+        result = news_service.search_news(
             query=request.query,
             max_results=request.max_results
         )
@@ -88,7 +88,7 @@ def get_news_titles(request: NewsTitlesRequest) -> NewsTitlesResponse:
     try:
         logger.info(f"Getting news titles with query: {request.query}")
         
-        result = news_helper.get_news_titles(
+        result = news_service.get_news_titles(
             query=request.query,
             max_results=request.max_results
         )
@@ -142,7 +142,7 @@ def save_news(request: SaveNewsRequest) -> SaveNewsResponse:
     try:
         logger.info(f"Saving {len(request.articles)} articles for query: {request.query}")
         
-        result = news_helper.save_news(
+        result = news_service.save_news(
             articles=request.articles,
             query=request.query,
             format_type=request.format_type
