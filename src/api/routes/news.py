@@ -9,8 +9,9 @@ from ...models.schemas import NewsSearchRequest, NewsSearchResponse, ErrorRespon
 from ...services.news_service import NewsService
 from ...common.exceptions import ScrapingError, ParsingError
 from ...common.logger import get_logger
+from ...common.router import create_versioned_router
 
-router = APIRouter(prefix="/news", tags=["news"])
+router = create_versioned_router(prefix="/news", tags=["news"])
 logger = get_logger(__name__)
 
 

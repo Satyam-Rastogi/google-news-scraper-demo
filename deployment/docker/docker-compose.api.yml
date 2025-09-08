@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  news-scraper-api:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: news-scraper-api
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - API_PREFIX=/api/v1
+      - ENABLE_VERSIONING=true
+      - DEFAULT_MAX_RESULTS=50
+      - MAX_RESULTS_LIMIT=100
+      - REQUEST_TIMEOUT=30
+      - REQUEST_DELAY=1.0
+      - DEFAULT_OUTPUT_FORMAT=json
+      - OUTPUT_DIRECTORY=artifacts/data/scraped
+      - LOGS_DIRECTORY=logs
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - ENABLE_CACHE=true
+      - CACHE_TTL=3600
+    volumes:
+      - news_data:/app/artifacts
+      - news_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - news-scraper-network
+
+volumes:
+  news_data:
+    driver: local
+  news_logs:
+    driver: local
+
+networks:
+  news-scraper-network:
+    driver: bridge

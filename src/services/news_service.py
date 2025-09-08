@@ -16,6 +16,7 @@ from ..models.schemas import Article, NewsSearchRequest, NewsSearchResponse
 from ..common.config import config
 from ..common.exceptions import ScrapingError, ParsingError
 from ..common.logger import get_logger
+from ..common.utils.artifacts import artifacts_manager, ArtifactType
 
 
 class NewsService:
@@ -30,9 +31,7 @@ class NewsService:
         self.parser = ArticleParser(ParsingConfig(
             max_articles=config.max_results_limit
         ))
-        
-        # Ensure output directory exists
-        Path(config.output_directory).mkdir(parents=True, exist_ok=True)
+        self.artifacts = artifacts_manager
 
     async def search_news(self, request: NewsSearchRequest) -> NewsSearchResponse:
         """
@@ -93,7 +92,7 @@ class NewsService:
 
     async def _save_articles(self, articles: List[Dict], query: str, format_type: str) -> None:
         """
-        Save articles to file
+        Save articles to file using artifacts manager
         
         Args:
             articles: List of article dictionaries
@@ -101,23 +100,25 @@ class NewsService:
             format_type: Output format (json or csv)
         """
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            safe_query = query.replace(' ', '_').replace('/', '_')
-            filename = f"{safe_query}_{timestamp}.{format_type}"
-            filepath = os.path.join(config.output_directory, filename)
+            # Save to scraped data directory
+            file_path = self.artifacts.save_artifact(
+                data=articles,
+                query=query,
+                format_type=format_type,
+                artifact_type="scraped"
+            )
             
-            if format_type == 'json':
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    json.dump(articles, f, indent=2, ensure_ascii=False)
-            elif format_type == 'csv':
-                if articles:
-                    fieldnames = ['title', 'link', 'snippet']
-                    with open(filepath, 'w', newline='', encoding='utf-8') as f:
-                        writer = csv.DictWriter(f, fieldnames=fieldnames)
-                        writer.writeheader()
-                        writer.writerows(articles)
+            self.logger.info(f"Saved {len(articles)} articles to {file_path}")
             
-            self.logger.info(f"Saved {len(articles)} articles to {filepath}")
+            # Also save a copy to exports directory for easy access
+            export_path = self.artifacts.save_artifact(
+                data=articles,
+                query=query,
+                format_type=format_type,
+                artifact_type="exports"
+            )
+            
+            self.logger.info(f"Saved export copy to {export_path}")
             
         except Exception as e:
             self.logger.error(f"Error saving articles: {e}")
@@ -135,3 +136,46 @@ class NewsService:
             "service": "news-scraper",
             "version": config.api_version
         }
+    
+    def list_scraped_articles(self, format_type: Optional[str] = None) -> List[Path]:
+        """
+        List scraped articles
+        
+        Args:
+            format_type: Optional format filter (json, csv)
+            
+        Returns:
+            List of scraped article file paths
+        """
+        return self.artifacts.list_artifacts("scraped", format_type)
+    
+    def cleanup_old_articles(self, days_to_keep: int = 30) -> int:
+        """
+        Clean up old scraped articles
+        
+        Args:
+            days_to_keep: Number of days to keep articles
+            
+        Returns:
+            Number of files removed
+        """
+        return self.artifacts.cleanup_old_artifacts("scraped", days_to_keep)
+    
+    def get_artifacts_stats(self) -> Dict[str, any]:
+        """
+        Get artifacts statistics
+        
+        Returns:
+            Dictionary with artifacts statistics
+        """
+        stats = {}
+        
+        for artifact_type in ["scraped", "processed", "raw"]:
+            files = self.artifacts.list_artifacts(artifact_type)
+            stats[artifact_type] = {
+                "count": len(files),
+                "total_size": sum(f.stat().st_size for f in files if f.exists()),
+                "latest_file": files[0] if files else None
+            }
+        
+        return stats

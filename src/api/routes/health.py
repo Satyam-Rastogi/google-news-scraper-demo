@@ -7,8 +7,11 @@ from ...models.schemas import HealthResponse
 from ...services.news_service import NewsService
 from ...common.config import config
 from ...common.logger import get_logger
+from ...common.router import create_versioned_router, create_legacy_router
 
-router = APIRouter(prefix="/health", tags=["health"])
+# Health routes can be both versioned and legacy for backward compatibility
+router = create_versioned_router(prefix="/health", tags=["health"])
+legacy_router = create_legacy_router(prefix="/health", tags=["health"])
 logger = get_logger(__name__)
 
 
@@ -57,3 +60,22 @@ async def liveness_check():
     """
     logger.info("Liveness check requested")
     return {"status": "alive", "message": "Service is running"}
+
+
+# Legacy endpoints for backward compatibility
+@legacy_router.get("/", response_model=HealthResponse)
+async def legacy_health_check():
+    """Legacy health check endpoint"""
+    return await health_check()
+
+
+@legacy_router.get("/ready")
+async def legacy_readiness_check():
+    """Legacy readiness check endpoint"""
+    return await readiness_check()
+
+
+@legacy_router.get("/live")
+async def legacy_liveness_check():
+    """Legacy liveness check endpoint"""
+    return await liveness_check()

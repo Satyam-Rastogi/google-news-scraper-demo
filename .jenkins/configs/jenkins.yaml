@@ -1,0 +1,69 @@
+# Jenkins Configuration for Google News Scraper API
+
+# Pipeline Configuration
+pipeline:
+  name: "news-scraper-api-pipeline"
+  description: "CI/CD Pipeline for Google News Scraper API"
+  
+# Build Configuration
+build:
+  timeout: 30
+  retries: 3
+  parallel: true
+  
+# Test Configuration
+tests:
+  unit:
+    command: "uv run pytest tests/unit/ -v"
+    coverage_threshold: 80
+  integration:
+    command: "uv run pytest tests/integration/ -v"
+    timeout: 60
+  performance:
+    command: "k6 run performance-tests.js"
+    timeout: 300
+
+# Docker Configuration
+docker:
+  registry: "your-registry.com"
+  namespace: "news-scraper"
+  image_name: "news-scraper-api"
+  base_image: "python:3.11-slim"
+  
+# Deployment Configuration
+deployment:
+  staging:
+    environment: "staging"
+    url: "https://staging-api.news-scraper.com"
+    health_check: "/health/"
+  production:
+    environment: "production"
+    url: "https://api.news-scraper.com"
+    health_check: "/health/"
+    approval_required: true
+
+# Security Configuration
+security:
+  scan_docker: true
+  scan_code: true
+  tools:
+    - "bandit"
+    - "trivy"
+    - "snyk"
+
+# Notification Configuration
+notifications:
+  slack:
+    channel: "#deployments"
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+  email:
+    recipients: ["devops@company.com"]
+    on_failure: true
+    on_success: false
+
+# Environment Variables
+environment:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+  DOCKER_VERSION: "latest"
+  KUBECTL_VERSION: "1.28"

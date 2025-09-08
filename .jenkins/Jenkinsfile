@@ -1,0 +1,249 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'news-scraper-api'
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        REGISTRY_URL = 'your-registry.com'
+        KUBECONFIG = credentials('kubeconfig')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                sh '''
+                    echo "Setting up Python environment..."
+                    python -m venv venv
+                    source venv/bin/activate
+                    pip install uv
+                    uv sync --extra redis
+                '''
+            }
+        }
+        
+        stage('Lint & Format Check') {
+            steps {
+                sh '''
+                    source venv/bin/activate
+                    echo "Running linting..."
+                    uv run ruff check src/
+                    echo "Checking code format..."
+                    uv run ruff format --check src/
+                '''
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                sh '''
+                    source venv/bin/activate
+                    echo "Running security scan..."
+                    uv run bandit -r src/ -f json -o security-report.json || true
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'security-report.json',
+                        reportName: 'Security Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                sh '''
+                    source venv/bin/activate
+                    echo "Running unit tests..."
+                    uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+                '''
+            }
+            post {
+                always {
+                    publishCoverage adapters: [
+                        coberturaAdapter('coverage.xml')
+                    ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def image = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    docker.withRegistry("https://${REGISTRY_URL}", 'docker-registry-credentials') {
+                        image.push()
+                        image.push("latest")
+                    }
+                }
+            }
+        }
+        
+        stage('Security Scan Docker') {
+            steps {
+                sh '''
+                    echo "Scanning Docker image for vulnerabilities..."
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                        --format json --output trivy-report.json || true
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'trivy-report.json',
+                        reportName: 'Docker Security Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                sh '''
+                    echo "Deploying to staging environment..."
+                    cd deployment/docker
+                    docker-compose -f docker-compose.yml down || true
+                    docker-compose -f docker-compose.yml up -d
+                    
+                    echo "Waiting for services to be ready..."
+                    sleep 30
+                    
+                    echo "Running health checks..."
+                    curl -f http://localhost:8000/health/ || exit 1
+                    docker exec news-scraper-redis redis-cli ping || exit 1
+                '''
+            }
+        }
+        
+        stage('Integration Tests') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                sh '''
+                    source venv/bin/activate
+                    echo "Running integration tests..."
+                    uv run pytest tests/integration/ -v || true
+                '''
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    sh '''
+                        echo "Deploying to production Kubernetes cluster..."
+                        kubectl set image deployment/news-scraper-api \
+                            news-scraper-api=${REGISTRY_URL}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                        
+                        echo "Waiting for rollout to complete..."
+                        kubectl rollout status deployment/news-scraper-api
+                        
+                        echo "Running production health checks..."
+                        kubectl get pods -l app=news-scraper-api
+                    '''
+                }
+            }
+        }
+        
+        stage('Performance Tests') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh '''
+                    echo "Running performance tests..."
+                    # Add performance testing here
+                    # Example: k6 run performance-tests.js
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh '''
+                echo "Cleaning up..."
+                docker system prune -f || true
+            '''
+        }
+        
+        success {
+            script {
+                if (env.BRANCH_NAME == 'main') {
+                    slackSend(
+                        channel: '#deployments',
+                        color: 'good',
+                        message: "✅ Production deployment successful!\n" +
+                                "Build: ${env.BUILD_NUMBER}\n" +
+                                "Commit: ${env.GIT_COMMIT_SHORT}\n" +
+                                "Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    )
+                }
+            }
+        }
+        
+        failure {
+            script {
+                slackSend(
+                    channel: '#deployments',
+                    color: 'danger',
+                    message: "❌ Build failed!\n" +
+                            "Build: ${env.BUILD_NUMBER}\n" +
+                            "Branch: ${env.BRANCH_NAME}\n" +
+                            "Commit: ${env.GIT_COMMIT_SHORT}\n" +
+                            "Console: ${env.BUILD_URL}console"
+                )
+            }
+        }
+        
+        unstable {
+            script {
+                slackSend(
+                    channel: '#deployments',
+                    color: 'warning',
+                    message: "⚠️ Build unstable!\n" +
+                            "Build: ${env.BUILD_NUMBER}\n" +
+                            "Branch: ${env.BRANCH_NAME}\n" +
+                            "Console: ${env.BUILD_URL}console"
+                )
+            }
+        }
+    }
+}

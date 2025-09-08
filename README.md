@@ -23,9 +23,24 @@ google-news-scraper-demo/
 │   │   └── parser.py          # HTML parser for articles
 │   ├── models/                # Data models
 │   │   └── schemas.py         # Pydantic models
-│   └── services/              # Business logic services
-│       └── news_service.py    # News processing service
-├── data/                      # Output directory for scraped data
+│   ├── services/              # Business logic services
+│   │   └── news_service.py    # News processing service
+│   └── database/              # Database layer (future)
+│       ├── models/            # Database models
+│       ├── migrations/        # Database migrations
+│       ├── repositories/      # Repository pattern
+│       └── connections/       # Connection management
+├── artifacts/                 # Output artifacts directory
+│   ├── data/                 # Data outputs
+│   │   ├── raw/             # Raw scraped data
+│   │   ├── processed/       # Processed data
+│   │   └── scraped/         # Direct scraped outputs
+│   ├── reports/             # Generated reports
+│   └── exports/             # Exported data in various formats
+├── logs/                     # Application logs
+│   ├── api/                 # API server logs
+│   ├── scraper/             # Scraper operation logs
+│   └── errors/              # Error logs
 ├── main.py                    # Main entry point
 ├── app.py                     # Alternative entry point
 ├── pyproject.toml             # Project dependencies
@@ -40,6 +55,7 @@ This project follows a clean architecture pattern:
 - **Services Layer** (`src/services/`): Business logic and orchestration
 - **Core Layer** (`src/core/`): Core functionality (scraping, parsing)
 - **Models Layer** (`src/models/`): Data models and schemas
+- **Database Layer** (`src/database/`): Database models, repositories, and connections (future)
 - **Common Layer** (`src/common/`): Shared utilities and configuration
 - **CLI Layer** (`src/cli/`): Command-line interface
 
@@ -82,14 +98,24 @@ python main.py --cli "artificial intelligence" --format csv --max-results 20
 
 ### API Endpoints
 
-#### Search News
-- **POST** `/news/search` - Search for news articles
-- **GET** `/news/search?query=...` - Search for news articles (GET)
+#### Versioned Endpoints (Recommended)
+- **POST** `/api/v1/news/search` - Search for news articles
+- **GET** `/api/v1/news/search?query=...` - Search for news articles (GET)
+- **GET** `/api/v1/health/` - Health status
+- **GET** `/api/v1/health/ready` - Readiness check
+- **GET** `/api/v1/health/live` - Liveness check
+- **GET** `/api/v1/artifacts/scraped` - List scraped articles
+- **GET** `/api/v1/artifacts/stats` - Get artifacts statistics
+- **DELETE** `/api/v1/artifacts/cleanup` - Clean up old articles
 
-#### Health Checks
-- **GET** `/health/` - Health status
-- **GET** `/health/ready` - Readiness check
-- **GET** `/health/live` - Liveness check
+#### Legacy Endpoints (Backward Compatibility)
+- **GET** `/health/` - Health status (legacy)
+- **GET** `/health/ready` - Readiness check (legacy)
+- **GET** `/health/live` - Liveness check (legacy)
+
+#### Utility Endpoints
+- **GET** `/` - API information
+- **GET** `/version` - Version information
 
 ## Configuration
 
@@ -98,12 +124,16 @@ Configuration can be set via environment variables:
 - `HOST`: Server host (default: 0.0.0.0)
 - `PORT`: Server port (default: 8000)
 - `DEBUG`: Debug mode (default: false)
+- `API_PREFIX`: API prefix for versioning (default: /api/v1)
+- `ENABLE_VERSIONING`: Enable API versioning (default: true)
+- `SUPPORTED_VERSIONS`: Comma-separated supported versions (default: v1)
 - `DEFAULT_MAX_RESULTS`: Default max results (default: 50)
 - `MAX_RESULTS_LIMIT`: Maximum results limit (default: 100)
 - `REQUEST_TIMEOUT`: Request timeout in seconds (default: 30)
 - `REQUEST_DELAY`: Delay between requests in seconds (default: 1.0)
 - `DEFAULT_OUTPUT_FORMAT`: Default output format (default: json)
-- `OUTPUT_DIRECTORY`: Output directory (default: data)
+- `OUTPUT_DIRECTORY`: Output directory (default: artifacts/data/scraped)
+- `LOGS_DIRECTORY`: Logs directory (default: logs)
 - `LOG_LEVEL`: Log level (default: INFO)
 
 ## Development
