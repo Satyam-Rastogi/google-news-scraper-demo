@@ -43,6 +43,98 @@ services:
     networks:
       - news-scraper-network
 
+  # Celery worker for news scraping tasks
+  celery-worker:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: news-scraper-celery-worker
+    command: celery -A src.workers.celery_app:celery_app worker --loglevel=info --queues=news_scraping --concurrency=2 --hostname=news-worker@%h
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - LOG_LEVEL=INFO
+      - OUTPUT_DIRECTORY=artifacts/data/scraped
+      - LOGS_DIRECTORY=logs
+    volumes:
+      - news_data:/app/artifacts
+      - news_logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - news-scraper-network
+
+  # Celery cleanup worker
+  celery-cleanup-worker:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: news-scraper-celery-cleanup
+    command: celery -A src.workers.celery_app:celery_app worker --loglevel=info --queues=cleanup --concurrency=1 --hostname=cleanup-worker@%h
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - LOG_LEVEL=INFO
+      - OUTPUT_DIRECTORY=artifacts/data/scraped
+      - LOGS_DIRECTORY=logs
+    volumes:
+      - news_data:/app/artifacts
+      - news_logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - news-scraper-network
+
+  # Celery beat scheduler
+  celery-beat:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: news-scraper-celery-beat
+    command: celery -A src.workers.celery_app:celery_app beat --loglevel=info
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - LOG_LEVEL=INFO
+      - OUTPUT_DIRECTORY=artifacts/data/scraped
+      - LOGS_DIRECTORY=logs
+    volumes:
+      - news_data:/app/artifacts
+      - news_logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - news-scraper-network
+
+  # Flower monitoring
+  celery-flower:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: news-scraper-flower
+    command: celery -A src.workers.celery_app:celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - news-scraper-network
+
   # Redis for caching and session management
   redis:
     image: redis:7-alpine

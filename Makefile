@@ -48,4 +48,23 @@ remove-redis: ## Remove Redis container
 
 redis-logs: ## Show Redis logs
 	cd deployment/docker && docker-compose logs -f redis
+
+# Celery Commands
+celery-worker: ## Start Celery worker
+	uv run python -m src.workers.worker_manager start --queue news_scraping --concurrency 2
+
+celery-cleanup-worker: ## Start Celery cleanup worker
+	uv run python -m src.workers.worker_manager start --queue cleanup --concurrency 1
+
+celery-beat: ## Start Celery beat scheduler
+	uv run python -m src.workers.worker_manager start --queue beat
+
+celery-flower: ## Start Flower monitoring
+	uv run python -m src.workers.worker_manager start --queue flower --port 5555
+
+celery-stop: ## Stop all Celery workers
+	uv run python -m src.workers.worker_manager stop
+
+celery-status: ## Show Celery worker status
+	uv run python -m src.workers.worker_manager status
 	

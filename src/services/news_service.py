@@ -33,62 +33,13 @@ class NewsService:
         ))
         self.artifacts = artifacts_manager
 
+    # Legacy synchronous method - commented out, use Celery tasks instead
+    """
     async def search_news(self, request: NewsSearchRequest) -> NewsSearchResponse:
-        """
-        Search for news articles based on the request
-        
-        Args:
-            request: News search request
-            
-        Returns:
-            News search response with articles
-            
-        Raises:
-            ScrapingError: If scraping fails
-            ParsingError: If parsing fails
-        """
-        try:
-            self.logger.info(f"Searching for news with query: {request.query}")
-            
-            # Scrape HTML content
-            html_content = self.scraper.search(request.query)
-            if not html_content:
-                raise ScrapingError(f"Failed to scrape news for query: {request.query}")
-            
-            # Parse articles
-            articles_data = self.parser.parse(html_content)
-            if not articles_data:
-                raise ParsingError(f"No articles found for query: {request.query}")
-            
-            # Limit results
-            max_results = min(request.max_results or config.default_max_results, 
-                            config.max_results_limit)
-            articles_data = articles_data[:max_results]
-            
-            # Convert to Article models
-            articles = [
-                Article(
-                    title=article['title'],
-                    link=article['link'],
-                    snippet=article['snippet']
-                )
-                for article in articles_data
-            ]
-            
-            # Save to file if requested
-            if request.format:
-                await self._save_articles(articles_data, request.query, request.format)
-            
-            return NewsSearchResponse(
-                query=request.query,
-                total_results=len(articles),
-                articles=articles,
-                format=request.format or config.default_output_format
-            )
-            
-        except Exception as e:
-            self.logger.error(f"Error in news search: {e}")
-            raise
+        # This method is replaced by Celery async tasks
+        # Use scrape_news_async task instead
+        pass
+    """
 
     async def _save_articles(self, articles: List[Dict], query: str, format_type: str) -> None:
         """
@@ -179,3 +130,160 @@ class NewsService:
             }
         
         return stats
+    
+    async def scrape_news_async(
+        self,
+        query: str,
+        max_results: int = 10,
+        format_type: str = "json",
+        language: str = "en",
+        country: str = "US",
+        time_period: str = "24h"
+    ) -> Dict:
+        """
+        Asynchronously scrape news articles (for Celery tasks)
+        
+        Args:
+            query: Search query
+            max_results: Maximum number of results
+            format_type: Output format (json, csv, excel)
+            language: Language code
+            country: Country code
+            time_period: Time period for search
+        
+        Returns:
+            Dict with articles and metadata
+        """
+        try:
+            self.logger.info(f"Starting async news scraping for query: {query}")
+            
+            # Scrape HTML content
+            html_content = self.scraper.search(query)
+            if not html_content:
+                raise ScrapingError(f"Failed to scrape news for query: {query}")
+            
+            # Parse articles
+            articles_data = self.parser.parse(html_content)
+            if not articles_data:
+                raise ParsingError(f"No articles found for query: {query}")
+            
+            # Limit results
+            max_results = min(max_results, config.max_results_limit)
+            articles_data = articles_data[:max_results]
+            
+            # Convert to Article models
+            articles = [
+                Article(
+                    title=article['title'],
+                    link=article['link'],
+                    snippet=article['snippet']
+                )
+                for article in articles_data
+            ]
+            
+            # Save to file if requested
+            if format_type:
+                await self._save_articles(articles_data, query, format_type)
+            
+            # Convert to dict format for return
+            articles_dict = [article.dict() for article in articles]
+            
+            return {
+                "articles": articles_dict,
+                "total_count": len(articles),
+                "query": query,
+                "language": language,
+                "country": country,
+                "time_period": time_period,
+                "scraped_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Async news scraping failed: {e}")
+            raise
+    
+    async def scrape_multiple_queries_async(
+        self,
+        queries: List[str],
+        max_results: int = 10,
+        format_type: str = "json",
+        language: str = "en",
+        country: str = "US",
+        time_period: str = "24h"
+    ) -> Dict[str, Dict]:
+        """
+        Asynchronously scrape news for multiple queries
+        
+        Args:
+            queries: List of search queries
+            max_results: Maximum number of results per query
+            format_type: Output format
+            language: Language code
+            country: Country code
+            time_period: Time period for search
+        
+        Returns:
+            Dict with results for each query
+        """
+        results = {}
+        
+        for query in queries:
+            try:
+                result = await self.scrape_news_async(
+                    query=query,
+                    max_results=max_results,
+                    format_type=format_type,
+                    language=language,
+                    country=country,
+                    time_period=time_period
+                )
+                results[query] = result
+                
+            except Exception as e:
+                self.logger.error(f"Failed to scrape query '{query}': {e}")
+                results[query] = {
+                    "error": str(e),
+                    "articles": [],
+                    "total_count": 0
+                }
+        
+        return results
+    
+    async def export_articles_async(
+        self,
+        articles: List[Dict],
+        query: str,
+        format_type: str = "json"
+    ) -> Dict:
+        """
+        Asynchronously export articles to specified format
+        
+        Args:
+            articles: List of article dictionaries
+            query: Search query for naming
+            format_type: Export format (json, csv, excel)
+        
+        Returns:
+            Dict with export result and file path
+        """
+        try:
+            self.logger.info(f"Starting async export for query: {query}")
+            
+            # Save to artifacts
+            file_path = self.artifacts.save_artifact(
+                data=articles,
+                query=query,
+                format_type=format_type,
+                artifact_type="exports"
+            )
+            
+            return {
+                "file_path": str(file_path),
+                "articles_count": len(articles),
+                "format_type": format_type,
+                "query": query
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Async export failed: {e}")
+            raise
