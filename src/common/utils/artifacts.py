@@ -6,15 +6,14 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Literal
-from .config import config
-from .logger import get_logger
+from src.common.config import config
+from src.common.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Artifact types
-ArtifactType = Literal["scraped", "processed", "raw", "reports", "exports"]
+ArtifactType = Literal["headlines_raw", "headlines_processed"]
 ExportFormat = Literal["json", "csv", "excel"]
-ReportPeriod = Literal["daily", "weekly", "monthly"]
 
 
 class ArtifactsManager:
@@ -28,15 +27,14 @@ class ArtifactsManager:
     def _ensure_directories(self) -> None:
         """Ensure all required directories exist"""
         directories = [
-            self.base_dir / "data" / "scraped",
-            self.base_dir / "data" / "processed", 
-            self.base_dir / "data" / "raw",
-            self.base_dir / "reports" / "daily",
-            self.base_dir / "reports" / "weekly",
-            self.base_dir / "reports" / "monthly",
-            self.base_dir / "exports" / "json",
-            self.base_dir / "exports" / "csv",
-            self.base_dir / "exports" / "excel",
+            # Headlines structure
+            self.base_dir / "headlines" / "raw" / "json",
+            self.base_dir / "headlines" / "raw" / "csv", 
+            self.base_dir / "headlines" / "raw" / "excel",
+            self.base_dir / "headlines" / "processed" / "json",
+            self.base_dir / "headlines" / "processed" / "csv",
+            self.base_dir / "headlines" / "processed" / "excel",
+            # Logs
             self.logs_dir / "api",
             self.logs_dir / "scraper",
             self.logs_dir / "errors"
@@ -46,20 +44,14 @@ class ArtifactsManager:
             directory.mkdir(parents=True, exist_ok=True)
             logger.debug(f"Ensured directory exists: {directory}")
     
-    def get_data_path(self, artifact_type: ArtifactType) -> Path:
-        """Get path for data artifacts"""
-        if artifact_type in ["scraped", "processed", "raw"]:
-            return self.base_dir / "data" / artifact_type
+    def get_headlines_path(self, artifact_type: ArtifactType, format_type: ExportFormat) -> Path:
+        """Get path for headlines artifacts"""
+        if artifact_type == "headlines_raw":
+            return self.base_dir / "headlines" / "raw" / format_type
+        elif artifact_type == "headlines_processed":
+            return self.base_dir / "headlines" / "processed" / format_type
         else:
-            raise ValueError(f"Invalid data artifact type: {artifact_type}")
-    
-    def get_export_path(self, format_type: ExportFormat) -> Path:
-        """Get path for export artifacts"""
-        return self.base_dir / "exports" / format_type
-    
-    def get_report_path(self, period: ReportPeriod) -> Path:
-        """Get path for report artifacts"""
-        return self.base_dir / "reports" / period
+            raise ValueError(f"Invalid headlines artifact type: {artifact_type}")
     
     def get_log_path(self, log_type: str) -> Path:
         """Get path for log files"""
@@ -118,12 +110,10 @@ class ArtifactsManager:
         date_folder = timestamp.strftime("%Y-%m-%d")
         time_folder = timestamp.strftime("%H-%M-%S")
         
-        if artifact_type in ["scraped", "processed", "raw"]:
-            base_path = self.get_data_path(artifact_type) / date_folder / time_folder
-        elif artifact_type == "exports":
-            base_path = self.get_export_path(format_type) / date_folder / time_folder
+        if artifact_type in ["headlines_raw", "headlines_processed"]:
+            base_path = self.get_headlines_path(artifact_type, format_type) / date_folder / time_folder
         else:
-            base_path = self.base_dir / artifact_type / date_folder / time_folder
+            raise ValueError(f"Invalid artifact type: {artifact_type}")
         
         filename = self.generate_filename(query, format_type, artifact_type, timestamp)
         return base_path / filename
@@ -186,15 +176,13 @@ class ArtifactsManager:
         Returns:
             List of artifact file paths
         """
-        if artifact_type in ["scraped", "processed", "raw"]:
-            base_path = self.get_data_path(artifact_type)
-        elif artifact_type == "exports":
+        if artifact_type in ["headlines_raw", "headlines_processed"]:
             if format_type:
-                base_path = self.get_export_path(format_type)
+                base_path = self.get_headlines_path(artifact_type, format_type)
             else:
-                base_path = self.base_dir / "exports"
+                base_path = self.base_dir / "headlines" / artifact_type.replace("headlines_", "")
         else:
-            base_path = self.base_dir / artifact_type
+            raise ValueError(f"Invalid artifact type: {artifact_type}")
         
         if not base_path.exists():
             return []

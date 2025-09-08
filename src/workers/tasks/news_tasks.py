@@ -4,10 +4,10 @@ Celery tasks for news scraping operations
 import asyncio
 from typing import List, Dict, Optional
 from celery import Task
-from ..celery_app import celery_app
-from ...services.news_service import NewsService
-from ...common.logger import get_logger
-from ...common.exceptions import NewsScraperException
+from src.workers.celery_app import celery_app
+from src.services.news_service import NewsService
+from src.common.logger import get_logger
+from src.common.exceptions import NewsScraperException
 
 logger = get_logger(__name__)
 

@@ -10,13 +10,15 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from pathlib import Path
 
-from ..core.scraper import GoogleNewsScraper, ScrapingConfig
-from ..core.parser import ArticleParser, ParsingConfig
-from ..models.schemas import Article, NewsSearchRequest, NewsSearchResponse
-from ..common.config import config
-from ..common.exceptions import ScrapingError, ParsingError
-from ..common.logger import get_logger
-from ..common.utils.artifacts import artifacts_manager, ArtifactType
+from src.core.scraper import GoogleNewsScraper, ScrapingConfig
+from src.core.parser import ArticleParser, ParsingConfig
+from src.models.schemas import Article, NewsSearchRequest, NewsSearchResponse
+from src.common.config import config
+from src.common.exceptions import ScrapingError, ParsingError
+from src.common.logger import get_logger
+from src.common.utils.artifacts import artifacts_manager, ArtifactType
+
+
 
 
 class NewsService:
@@ -41,38 +43,39 @@ class NewsService:
         pass
     """
 
-    async def _save_articles(self, articles: List[Dict], query: str, format_type: str) -> None:
+
+    async def _save_headlines(self, articles: List[Dict], query: str, format_type: str) -> None:
         """
-        Save articles to file using artifacts manager
+        Save headlines to dedicated headlines folder
         
         Args:
             articles: List of article dictionaries
             query: Search query for filename
-            format_type: Output format (json or csv)
+            format_type: Output format (json, csv, excel)
         """
         try:
-            # Save to scraped data directory
+            # Extract only headlines (titles) from articles
+            headlines_data = [
+                {
+                    "title": article['title'],
+                    "source": article.get('snippet', 'Unknown'),
+                    "link": article['link']
+                }
+                for article in articles
+            ]
+            
+            # Save to raw headlines directory
             file_path = self.artifacts.save_artifact(
-                data=articles,
+                data=headlines_data,
                 query=query,
                 format_type=format_type,
-                artifact_type="scraped"
+                artifact_type="headlines_raw"
             )
             
-            self.logger.info(f"Saved {len(articles)} articles to {file_path}")
-            
-            # Also save a copy to exports directory for easy access
-            export_path = self.artifacts.save_artifact(
-                data=articles,
-                query=query,
-                format_type=format_type,
-                artifact_type="exports"
-            )
-            
-            self.logger.info(f"Saved export copy to {export_path}")
+            self.logger.info(f"Saved {len(headlines_data)} headlines to {file_path}")
             
         except Exception as e:
-            self.logger.error(f"Error saving articles: {e}")
+            self.logger.error(f"Error saving headlines: {e}")
             # Don't raise exception as this is not critical
 
     def get_health_status(self) -> Dict[str, str]:
@@ -88,29 +91,41 @@ class NewsService:
             "version": config.api_version
         }
     
-    def list_scraped_articles(self, format_type: Optional[str] = None) -> List[Path]:
+    def list_headlines(self, format_type: Optional[str] = None) -> List[Path]:
         """
-        List scraped articles
+        List raw headlines files
         
         Args:
-            format_type: Optional format filter (json, csv)
+            format_type: Optional format filter (json, csv, excel)
             
         Returns:
-            List of scraped article file paths
+            List of headlines file paths
         """
-        return self.artifacts.list_artifacts("scraped", format_type)
+        return self.artifacts.list_artifacts("headlines_raw", format_type)
     
-    def cleanup_old_articles(self, days_to_keep: int = 30) -> int:
+    def list_processed_headlines(self, format_type: Optional[str] = None) -> List[Path]:
         """
-        Clean up old scraped articles
+        List processed headlines files
         
         Args:
-            days_to_keep: Number of days to keep articles
+            format_type: Optional format filter (json, csv, excel)
+            
+        Returns:
+            List of processed headlines file paths
+        """
+        return self.artifacts.list_artifacts("headlines_processed", format_type)
+    
+    def cleanup_old_headlines(self, days_to_keep: int = 30) -> int:
+        """
+        Clean up old headlines files
+        
+        Args:
+            days_to_keep: Number of days to keep headlines
             
         Returns:
             Number of files removed
         """
-        return self.artifacts.cleanup_old_artifacts("scraped", days_to_keep)
+        return self.artifacts.cleanup_old_artifacts("headlines_raw", days_to_keep)
     
     def get_artifacts_stats(self) -> Dict[str, any]:
         """
@@ -121,7 +136,8 @@ class NewsService:
         """
         stats = {}
         
-        for artifact_type in ["scraped", "processed", "raw"]:
+        # Get headlines statistics for all types
+        for artifact_type in ["headlines_raw", "headlines_processed"]:
             files = self.artifacts.list_artifacts(artifact_type)
             stats[artifact_type] = {
                 "count": len(files),
@@ -188,12 +204,12 @@ class NewsService:
                 for article in articles_data
             ]
             
-            # Save to file if requested
+            # Save headlines to file if requested
             if format_type:
-                await self._save_articles(articles_data, query, format_type)
+                await self._save_headlines(articles_data, query, format_type)
             
             # Convert to dict format for return
-            articles_dict = [article.dict() for article in articles]
+            articles_dict = [article.model_dump() for article in articles]
             
             return {
                 "articles": articles_dict,

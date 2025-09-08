@@ -8,9 +8,9 @@ from fastapi.responses import JSONResponse
 import time
 import logging
 
-from ..common.config import config
-from ..common.logger import setup_logging
-from ..common.exceptions import NewsScraperException
+from src.common.config import config
+from src.common.logger import setup_logging
+from src.common.exceptions import NewsScraperException
 from .routes import news, health, artifacts
 
 

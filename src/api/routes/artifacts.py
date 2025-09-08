@@ -6,9 +6,9 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional
 from pathlib import Path
 
-from ...services.news_service import NewsService
-from ...common.logger import get_logger
-from ...common.utils.router import create_versioned_router
+from src.services.news_service import NewsService
+from src.common.logger import get_logger
+from src.common.utils.router import create_versioned_router
 
 router = create_versioned_router(prefix="/artifacts", tags=["artifacts"])
 logger = get_logger(__name__)
@@ -94,24 +94,21 @@ async def get_artifacts_structure():
     Returns the current artifacts directory structure
     """
     try:
-        from ...common.artifacts import artifacts_manager
+        from src.common.utils.artifacts import artifacts_manager
         
         structure = {
             "artifacts": {
-                "data": {
-                    "scraped": list(artifacts_manager.get_data_path("scraped").glob("*")),
-                    "processed": list(artifacts_manager.get_data_path("processed").glob("*")),
-                    "raw": list(artifacts_manager.get_data_path("raw").glob("*"))
-                },
-                "exports": {
-                    "json": list(artifacts_manager.get_export_path("json").glob("*")),
-                    "csv": list(artifacts_manager.get_export_path("csv").glob("*")),
-                    "excel": list(artifacts_manager.get_export_path("excel").glob("*"))
-                },
-                "reports": {
-                    "daily": list(artifacts_manager.get_report_path("daily").glob("*")),
-                    "weekly": list(artifacts_manager.get_report_path("weekly").glob("*")),
-                    "monthly": list(artifacts_manager.get_report_path("monthly").glob("*"))
+                "headlines": {
+                    "raw": {
+                        "json": list(artifacts_manager.get_headlines_path("headlines_raw", "json").glob("*")),
+                        "csv": list(artifacts_manager.get_headlines_path("headlines_raw", "csv").glob("*")),
+                        "excel": list(artifacts_manager.get_headlines_path("headlines_raw", "excel").glob("*"))
+                    },
+                    "processed": {
+                        "json": list(artifacts_manager.get_headlines_path("headlines_processed", "json").glob("*")),
+                        "csv": list(artifacts_manager.get_headlines_path("headlines_processed", "csv").glob("*")),
+                        "excel": list(artifacts_manager.get_headlines_path("headlines_processed", "excel").glob("*"))
+                    }
                 }
             },
             "logs": {

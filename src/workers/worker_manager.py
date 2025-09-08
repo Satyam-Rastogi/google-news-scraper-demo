@@ -4,7 +4,7 @@ Worker management utilities for Celery
 import subprocess
 import sys
 from typing import List, Optional
-from ..common.logger import get_logger
+from src.common.logger import get_logger
 
 logger = get_logger(__name__)
 

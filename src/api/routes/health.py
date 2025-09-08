@@ -3,11 +3,11 @@ Health check API routes
 """
 
 from fastapi import APIRouter
-from ...models.schemas import HealthResponse
-from ...services.news_service import NewsService
-from ...common.config import config
-from ...common.logger import get_logger
-from ...common.router import create_versioned_router, create_legacy_router
+from src.models.schemas import HealthResponse
+from src.services.news_service import NewsService
+from src.common.config import config
+from src.common.logger import get_logger
+from src.common.router import create_versioned_router, create_legacy_router
 
 # Health routes can be both versioned and legacy for backward compatibility
 router = create_versioned_router(prefix="/health", tags=["health"])

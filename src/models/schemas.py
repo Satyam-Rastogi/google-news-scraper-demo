@@ -19,14 +19,13 @@ class Article(ArticleBase):
     id: Optional[int] = Field(None, description="Article ID")
     created_at: Optional[datetime] = Field(None, description="Creation timestamp")
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class NewsSearchRequest(BaseModel):
     """Request model for news search"""
     query: str = Field(..., description="Search query", min_length=1, max_length=200)
-    format: Optional[str] = Field("json", description="Output format", regex="^(json|csv)$")
+    format: Optional[str] = Field("json", description="Output format", pattern="^(json|csv)$")
     max_results: Optional[int] = Field(50, description="Maximum number of results", ge=1, le=100)
 
 

@@ -6,16 +6,16 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Dict, Optional
 from celery.result import AsyncResult
 
-from ...models.schemas import NewsSearchRequest, NewsSearchResponse, ErrorResponse
-from ...workers.tasks.news_tasks import (
+from src.models.schemas import NewsSearchRequest, NewsSearchResponse, ErrorResponse
+from src.workers.tasks.news_tasks import (
     scrape_news_async,
     scrape_multiple_queries,
     export_articles,
     get_task_status
 )
-from ...common.logger import get_logger
-from ...common.router import create_versioned_router
-from ...common.config import config
+from src.common.logger import get_logger
+from src.common.router import create_versioned_router
+from src.common.config import config
 
 router = create_versioned_router(prefix="/news", tags=["news"])
 logger = get_logger(__name__)

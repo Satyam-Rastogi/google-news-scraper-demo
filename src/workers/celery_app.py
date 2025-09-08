@@ -3,8 +3,8 @@ Celery application configuration and setup
 """
 import os
 from celery import Celery
-from ..common.config import config
-from ..common.logger import get_logger
+from src.common.config import config
+from src.common.logger import get_logger
 
 logger = get_logger(__name__)
 
