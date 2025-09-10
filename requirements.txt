@@ -1,0 +1,10 @@
+selenium==4.15.0
+webdriver-manager==4.0.1
+beautifulsoup4==4.12.2
+requests==2.32.3
+schedule==1.2.0
+newspaper3k==0.2.8
+Pillow==10.0.0
+selectolax==0.3.27
+httpx==0.28.1
+PySocks==1.7.1

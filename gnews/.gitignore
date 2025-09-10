@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+
+.DS_Store
+.venv
+.ignore
+.backup_readme.md
+.backup_readme2.md
+
+dist/
+build/
+
+*.egg-info/
+
+test.py

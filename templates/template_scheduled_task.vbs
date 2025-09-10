@@ -1,0 +1,1 @@
+CreateObject("Wscript.Shell").Run "C:\\Users\\Asus\\Downloads\\google_news_scrapper\\news_collector\\{task_name}_task.bat", 0, True
