@@ -18,6 +18,7 @@ A comprehensive news article collection system that scrapes Google News for spec
 
 ## Installation
 
+### Option 1: Traditional Setup
 1. **Prerequisites**:
    - Python 3.7+
    - [uv](https://github.com/astral-sh/uv) - An extremely fast Python package installer and resolver (recommended)
@@ -38,6 +39,20 @@ A comprehensive news article collection system that scrapes Google News for spec
    
    # Install dependencies using uv
    uv pip install -r requirements.txt
+   ```
+
+### Option 2: Docker Setup (Recommended)
+1. **Prerequisites**:
+   - Docker Engine 20.10+ or Docker Desktop
+   - Docker Compose v2+
+
+2. **Setup with Docker**:
+   ```bash
+   # Build the Docker image
+   docker build -t news-collector .
+   
+   # Or use docker-compose
+   docker-compose build
    ```
 
 ## Usage

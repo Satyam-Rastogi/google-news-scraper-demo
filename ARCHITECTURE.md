@@ -17,6 +17,9 @@ news_collector/
 │   └── tests/             # Test files
 ├── templates/             # Scheduled task templates
 ├── tests/                 # Additional test files
+├── Dockerfile              # Docker configuration
+├── docker-compose.yml      # Docker Compose configuration
+├── .dockerignore           # Docker ignore file
 └── venv/                  # Virtual environment
 ```
 
@@ -198,6 +201,40 @@ Key Functions:
 - `.bat`: Windows batch script template
 - `.ps1`: PowerShell script template
 - `.vbs`: VBScript template for hidden execution
+
+## Docker Configuration
+
+### Dockerfile
+**Docker image configuration**
+
+Key Components:
+- Uses Python 3.13 slim image as base
+- Installs system dependencies for Chrome and Python packages
+- Installs Chrome browser for Selenium
+- Copies and installs Python dependencies
+- Sets up proper environment variables
+- Exposes port 8000 for potential web interfaces
+- Sets entry point to the main application
+
+### docker-compose.yml
+**Docker Compose configuration for development and deployment**
+
+Key Components:
+- Defines the news-collector service
+- Builds from the Dockerfile
+- Sets environment variables
+- Configures volume mounts for data persistence
+- Allows customization of command arguments
+
+### .dockerignore
+**Files and directories to exclude from Docker builds**
+
+Key Components:
+- Git files and directories
+- Development artifacts
+- Log files
+- Configuration files that should be mounted
+- Build artifacts
 
 ## Data Flow
 

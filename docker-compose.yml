@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  news-collector:
+    build: .
+    container_name: news-collector
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    # For running scheduled tasks, you might want to use:
+    # command: ["--schedule", "--daily", "--hour", "9", "--minute", "0"]
+    # For running a single collection:
+    # command: ["technology", "--format", "json", "--full-count", "3"]
