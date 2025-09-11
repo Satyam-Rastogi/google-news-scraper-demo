@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "async-news-scraper"
+version = "2.0.0"
+description = "An asynchronous news article collection system that scrapes Google News for specified topics"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Satyam Rastogi"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "selenium>=4.15.0",
+    "webdriver-manager>=4.0.1",
+    "beautifulsoup4>=4.12.2",
+    "requests>=2.32.3",
+    "schedule>=1.2.0",
+    "newspaper3k>=0.2.8",
+    "Pillow>=10.0.0",
+    "selectolax>=0.3.27",
+    "httpx>=0.28.1",
+    "PySocks>=1.7.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/Satyam-Rastogi/async_news_scraper"
+Repository = "https://github.com/Satyam-Rastogi/async_news_scraper"
+Issues = "https://github.com/Satyam-Rastogi/async_news_scraper/issues"
+
+[project.scripts]
+news-collector = "src.core.main:main"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "data*", "venv*"]

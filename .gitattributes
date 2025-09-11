@@ -1,0 +1,16 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Force batch scripts to have Windows line endings
+*.bat text eol=crlf
+
+# Force shell scripts to have Unix line endings
+*.sh text eol=lf
+
+# Denote all files that are truly binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
