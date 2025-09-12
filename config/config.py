@@ -74,9 +74,7 @@ class Config:
                             i += 1
                         config_values[key] = array_values
                     # Handle boolean values
-                    elif key == "SCRAPE_FULL_ARTICLES":
-                        config_values[key] = value.lower() in ('true', '1', 'yes', 'on')
-                    elif key == "SCRAPE_IMAGES":
+                    elif key in ("SCRAPE_FULL_ARTICLES", "SCRAPE_IMAGES"):
                         config_values[key] = value.lower() in ('true', '1', 'yes', 'on')
                     # Handle integer values
                     elif key in ("FULL_ARTICLES_COUNT", "SCHEDULER_INTERVAL_MINUTES", 

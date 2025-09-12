@@ -15,6 +15,7 @@ A comprehensive news article collection system that scrapes Google News for spec
 - **Comprehensive Logging**: Detailed logs for debugging and monitoring
 - **Markdown Generation**: Convert articles to Markdown format
 - **Enhanced Data Structure**: Richer data with additional fields (serial_number, date/time, etc.)
+- **Weather Data Collection**: Collect weather data using the National Weather Service API (USA only)
 
 ## Installation
 
@@ -197,6 +198,18 @@ python src/core/main.py "topic" --schedule --daily --hour 9 --minute 0
 python src/core/main.py "topic" --schedule --interval 60
 ```
 
+### Weather Collection Options
+```bash
+# Collect weather data for a specific US city
+python src/core/main.py --weather "New York"
+
+# Collect news (explicitly specified)
+python src/core/main.py --news "technology" --format csv
+
+# Collect both news and weather (will prompt for queries)
+python src/core/main.py --nw
+```
+
 ### Complete Examples
 
 ```bash
@@ -229,6 +242,15 @@ python src/core/main.py "technology" --images download --limit 10
 
 # Get actual article images by combining with full article scraping
 python src/core/main.py "technology" --images download --full-articles --full-count 5
+
+# Collect weather data for a specific US city
+python src/core/main.py --weather "New York"
+
+# Collect news (explicitly specified)
+python src/core/main.py --news "technology" --format csv
+
+# Collect both news and weather (will prompt for queries)
+python src/core/main.py --nw
 ```
 
 ## Configuration
@@ -409,6 +431,13 @@ schtasks /query /tn "AI News Collector"
 
 **Mitigation**: The system filters out content that appears to require human verification.
 
+### 6. Weather Data Limitations
+**Issue**: The National Weather Service API only provides data for US locations.
+
+**Impact**: Weather data collection is limited to US cities only.
+
+**Workaround**: For international weather data, consider using a different service or API.
+
 ## Alternatives to Overcome Limitations
 
 ### 1. For Homepage Fetching Limitation
@@ -432,6 +461,10 @@ schtasks /query /tn "AI News Collector"
 - **Subscription Services**: Use subscription-based news services with APIs
 - **Manual Collection**: Implement manual collection workflows for important articles
 - **Hybrid Approach**: Combine automated scraping with manual curation
+
+### 5. For Weather Data Limitations
+- **Alternative Weather APIs**: Use international weather services for global coverage
+- **Multiple API Integration**: Implement support for multiple weather APIs
 
 ## Troubleshooting
 
@@ -470,6 +503,18 @@ python src/core/main.py "technology" --images download --full-articles --full-co
 
 # This only gets favicons
 python src/core/main.py "technology" --images download
+```
+
+### Weather Data Notes
+
+**Why is weather data only available for US cities?**
+- The National Weather Service API only provides data for US locations
+- For international weather data, consider using a different service
+
+**How to get weather data:**
+```bash
+# This gets weather data for US cities
+python src/core/main.py --weather "New York"
 ```
 
 ### Log Files

@@ -246,6 +246,17 @@ def main_cli(queries: Optional[List[str]] = None, output_format: Optional[str] =
     print(f"{'':^{width}}")
     print(f"{'News collection completed successfully!':^{width}}")
 
+def get_user_input(prompt: str) -> str:
+    """Get user input with prompt"""
+    try:
+        return input(prompt).strip()
+    except KeyboardInterrupt:
+        logger.info("Operation interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Error getting user input: {e}")
+        return ""
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Collect news articles from Google News with optional scheduling",
@@ -261,8 +272,20 @@ Examples:
   python news_collector.py "machine learning" --schedule --interval 30
   python news_collector.py --schedule --daily --hour 9 --minute 0
   python news_collector.py "technology" --schedule --daily --hour 10 --minute 30 --full-articles --full-count 2
+        
+  # Weather collection
+  python news_collector.py --weather
+  python news_collector.py --weather "New York"
+  
+  # Combined news and weather collection
+  python news_collector.py --nw
         """
     )
+    
+    # Mode selection arguments
+    parser.add_argument("--news", "-n", action="store_true", help="Fetch only news (default behavior)")
+    parser.add_argument("--weather", "-w", action="store_true", help="Fetch only weather")
+    parser.add_argument("--nw", action="store_true", help="Fetch both news and weather")
     
     # Query arguments
     parser.add_argument("queries", nargs="*", help="The search query/queries for news articles (comma-separated for multiple). If no query is provided, fetches from Google News homepage.")
@@ -300,6 +323,19 @@ Examples:
                         help=f"Minute for daily run (0-59, default: {Config.SCHEDULER_DAILY_MINUTE})")
     
     args = parser.parse_args()
+    
+    # Validate mode selection - only one of --news, --weather, or --nw can be specified
+    mode_flags = [args.news, args.weather, args.nw]
+    if sum(mode_flags) > 1:
+        parser.error("Only one of --news, --weather, or --nw can be specified")
+    
+    # Determine mode - default to news if no mode flags are specified
+    if args.nw:
+        mode = "both"
+    elif args.weather:
+        mode = "weather"
+    else:
+        mode = "news"  # default
     
     # Validate numeric arguments
     try:
@@ -342,7 +378,77 @@ Examples:
         run_scheduler(query, args.interval, args.daily, args.hour, args.minute)
     else:
         # One-time collection mode
-        main_cli(queries, args.format, args.limit, args.images)
+        if mode == "weather":
+            # For weather mode, collect weather data
+            # If no queries provided, prompt user for city
+            if not queries:
+                city = get_user_input("Enter city name for weather collection: ")
+                if not city:
+                    logger.error("City name is required for weather collection")
+                    sys.exit(1)
+                queries = [city]
+            
+            # Import weather modules here to avoid circular imports
+            try:
+                from src.scrapers.weather_scraper import collect_weather
+                from src.scrapers.weather_processor import save_weather_data, display_weather_summary
+            except ImportError as e:
+                logger.error(f"Error importing weather modules: {e}")
+                sys.exit(1)
+            
+            # Collect weather for each city
+            for city in queries:
+                logger.info(f"Collecting weather data for: {city}")
+                weather_data = collect_weather(city)
+                if weather_data:
+                    display_weather_summary(weather_data)
+                    save_weather_data(weather_data, city, args.format)
+                else:
+                    logger.error(f"Failed to collect weather data for: {city}")
+            
+            print_header("WEATHER COLLECTION COMPLETED")
+            width = get_terminal_width()
+            print(f"{'Weather collection completed successfully!':^{width}}")
+            
+        elif mode == "both":
+            # For both mode, first collect news then weather
+            # Prompt user for news query
+            if not queries:
+                news_query = get_user_input("Enter your CLI query for news: ")
+                if news_query:
+                    queries = [news_query]
+            
+            # Process news
+            if queries:
+                main_cli(queries, args.format, args.limit, args.images)
+            
+            # Prompt user for weather query
+            weather_city = get_user_input("Enter your CLI query for weather: ")
+            if weather_city:
+                # Import weather modules here to avoid circular imports
+                try:
+                    from src.scrapers.weather_scraper import collect_weather
+                    from src.scrapers.weather_processor import save_weather_data, display_weather_summary
+                except ImportError as e:
+                    logger.error(f"Error importing weather modules: {e}")
+                    sys.exit(1)
+                
+                # Collect weather
+                logger.info(f"Collecting weather data for: {weather_city}")
+                weather_data = collect_weather(weather_city)
+                if weather_data:
+                    display_weather_summary(weather_data)
+                    save_weather_data(weather_data, weather_city, args.format)
+                else:
+                    logger.error(f"Failed to collect weather data for: {weather_city}")
+            
+            print_header("NEWS AND WEATHER COLLECTION COMPLETED")
+            width = get_terminal_width()
+            print(f"{'News and weather collection completed successfully!':^{width}}")
+            
+        else:
+            # News mode (default)
+            main_cli(queries, args.format, args.limit, args.images)
 
 if __name__ == "__main__":
     try:

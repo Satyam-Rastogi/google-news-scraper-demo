@@ -48,6 +48,32 @@ class FullArticleDict(TypedDict, total=False):
     meta_lang: str
 
 
+class WeatherDict(TypedDict, total=False):
+    """Type definition for weather data"""
+    # Core weather fields
+    city: str
+    country: str
+    temperature: float
+    feels_like: float
+    humidity: float
+    pressure: float
+    description: str
+    wind_speed: float
+    visibility: float
+    collected_at: str
+    
+    # Additional weather data
+    sunrise: str
+    sunset: str
+    timezone: int
+    
+    # Forecast data (list of forecast entries)
+    forecast: List[Dict[str, Any]]
+    
+    # Hourly forecast data
+    hourly_forecast: List[Dict[str, Any]]
+
+
 class ConfigDict(TypedDict, total=False):
     """Type definition for configuration data"""
     SEARCH_URL: str
@@ -70,3 +96,6 @@ class ConfigDict(TypedDict, total=False):
     MAX_DELAY: float
     FAILURE_THRESHOLD: int
     RECOVERY_TIMEOUT: int
+    
+    # Weather settings
+    WEATHER_API_KEY: str
