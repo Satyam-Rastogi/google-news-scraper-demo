@@ -142,6 +142,10 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
+# Backup files
+*.bak
+*~
+
 # Markdown files (excluding main README.md and ARCHITECTURE.md)
 temp_docs/
 *_summary.md
