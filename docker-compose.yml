@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Basic news collection service
   news-collector:
     build: .
     container_name: news-collector
@@ -11,7 +12,78 @@ services:
     volumes:
       - ./data:/app/data
       - ./config:/app/config
-    # For running scheduled tasks, you might want to use:
-    # command: ["--schedule", "--daily", "--hour", "9", "--minute", "0"]
-    # For running a single collection:
-    # command: ["technology", "--format", "json", "--full-count", "3"]
+    # Default command collects general news
+    # To override, use: docker-compose run news-collector "your query" --format json --full-count 5
+
+  # Scheduled news collection service
+  news-collector-scheduled:
+    build: .
+    container_name: news-collector-scheduled
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    # Run scheduled daily at 9:00 AM
+    command: ["--schedule", "--daily", "--hour", "9", "--minute", "0"]
+    restart: unless-stopped
+    # Uncomment the following lines to enable health checks
+    # healthcheck:
+    #   test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/app/data') else 1)"]
+    #   interval: 1h
+    #   timeout: 30s
+    #   retries: 3
+
+  # Weather collection service
+  weather-collector:
+    build: .
+    container_name: weather-collector
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    # Collect weather for New York by default
+    # To override, use: docker-compose run weather-collector --weather "London"
+    command: ["--weather", "New York"]
+
+  # Combined news and weather collection service
+  combined-collector:
+    build: .
+    container_name: combined-collector
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    # Collect both news and weather
+    # To run with specific queries: docker-compose run combined-collector --nw
+    command: ["--nw"]
+
+  # Development service with volume mounting for code changes
+  news-collector-dev:
+    build: .
+    container_name: news-collector-dev
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+      - DEVELOPMENT=true
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./src:/app/src
+      - ./utils:/app/utils
+    # For development, you can override the command when running
+    # Example: docker-compose run news-collector-dev "technology" --format json
+
+# Volumes for persistent data storage
+volumes:
+  news-data:
+  config-data:
