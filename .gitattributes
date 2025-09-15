@@ -1,16 +1,55 @@
-# Set default behavior to automatically normalize line endings
+# Set the default behavior, in case people don't have core.autocrlf set
 * text=auto
 
-# Force batch scripts to have Windows line endings
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+*.py text
+*.md text
+*.txt text
+*.cfg text
+*.toml text
+*.yaml text
+*.yml text
+*.json text
+*.html text
+*.css text
+*.js text
+*.sh text eol=lf
 *.bat text eol=crlf
 
-# Force shell scripts to have Unix line endings
-*.sh text eol=lf
+# Declare files that will always have CRLF line endings on checkout.
+*.sln text eol=crlf
 
-# Denote all files that are truly binary
+# Denote all files that are truly binary and should not be modified.
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
 *.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.flv binary
+*.fla binary
+*.swf binary
+*.zip binary
+*.7z binary
+*.tar binary
+*.gz binary
+*.tgz binary
+*.rar binary
+*.war binary
+*.ear binary
+*.class binary
+*.jar binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
 *.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
