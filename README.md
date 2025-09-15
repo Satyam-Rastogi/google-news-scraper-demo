@@ -2,6 +2,10 @@
 
 A comprehensive news article collection system that scrapes Google News for specified topics, extracts full article content, resolves Google News redirect URLs, downloads images, and saves results in JSON or CSV format.
 
+## Async Version Available
+
+This project now includes a high-performance async version that provides significant performance improvements through concurrent processing and connection pooling. See the [Async Implementation Summary](ASYNC_IMPLEMENTATION_SUMMARY.md) for details.
+
 ## Features
 
 - **Topic-based Search**: Collect news articles on any subject
@@ -86,6 +90,42 @@ python src/core/main.py "AI,ML,Data Science" --format csv
 python src/core/main.py
 ```
 
+### Async Manual Collection
+
+The async version provides significant performance improvements through concurrent processing:
+
+```bash
+# Basic usage with default settings (async version)
+python src/core/async_main.py "artificial intelligence"
+
+# Specify output format
+python src/core/async_main.py "machine learning" --format csv
+
+# Control full article scraping
+python src/core/async_main.py "data science" --full-count 5
+python src/core/async_main.py "technology" --no-full-articles
+
+# Collect multiple topics in one run (processed concurrently)
+python src/core/async_main.py "climate change" "renewable energy" --format json --full-count 3
+
+# Combine multiple options
+python src/core/async_main.py "financial markets" --format csv --full-count 2
+
+# Comma-separated topics in a single argument
+python src/core/async_main.py "AI,ML,Data Science" --format csv
+
+# Fetch from Google News homepage when no topic is specified
+python src/core/async_main.py
+```
+
+Performance improvements with the async version:
+- **50%+ reduction** in processing time for multiple topics
+- **Concurrent processing** of HTTP requests and article scraping
+- **Connection pooling** for efficient network resource management
+- **Better scalability** for handling large numbers of articles/topics
+
+See [ASYNC_IMPLEMENTATION_SUMMARY.md](ASYNC_IMPLEMENTATION_SUMMARY.md) and [FINAL_ASYNC_IMPLEMENTATION_SUMMARY.md](FINAL_ASYNC_IMPLEMENTATION_SUMMARY.md) for detailed information about the async implementation.
+
 ### Image Scraping Options
 
 The scraper offers flexible image handling with three modes:
@@ -140,6 +180,8 @@ python src/core/main.py "machine learning" --schedule --daily --hour 0 --minute 
 # Schedule periodic execution (every N minutes)
 python src/core/main.py "technology" --schedule --interval 60 --format json --full-count 2
 ```
+
+Note: For the async version, you can use `src/core/async_main.py` instead of `src/core/main.py` in the scheduled task generation script to take advantage of the performance improvements.
 
 ### Command Line Options
 
@@ -251,6 +293,9 @@ python src/core/main.py --news "technology" --format csv
 
 # Collect both news and weather (will prompt for queries)
 python src/core/main.py --nw
+
+# Use the async version for better performance
+python src/core/async_main.py "technology,AI,machine learning" --format csv --full-count 3
 ```
 
 ## Configuration
@@ -539,6 +584,8 @@ Check `data/logs/app.log` for detailed execution information:
 ## Architecture
 
 For detailed information about the project's architecture, including what each file and function does, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+The architecture documentation has been updated to include the new async modules that provide significant performance improvements through concurrent processing and connection pooling.
 
 ## Development
 

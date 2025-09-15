@@ -273,6 +273,19 @@ def validate_config_values(config_dict: dict) -> dict:
         validated['RECOVERY_TIMEOUT'] = validate_integer_range(
             validated['RECOVERY_TIMEOUT'], "RECOVERY_TIMEOUT", 10, 3600)
     
+    # Validate concurrency settings
+    if 'CONCURRENT_REQUESTS_LIMIT' in validated:
+        validated['CONCURRENT_REQUESTS_LIMIT'] = validate_integer_range(
+            validated['CONCURRENT_REQUESTS_LIMIT'], "CONCURRENT_REQUESTS_LIMIT", 1, 1000)
+    
+    if 'CONCURRENT_REQUESTS_PER_HOST' in validated:
+        validated['CONCURRENT_REQUESTS_PER_HOST'] = validate_integer_range(
+            validated['CONCURRENT_REQUESTS_PER_HOST'], "CONCURRENT_REQUESTS_PER_HOST", 1, 100)
+    
+    if 'CONCURRENT_ARTICLES_PROCESSING' in validated:
+        validated['CONCURRENT_ARTICLES_PROCESSING'] = validate_integer_range(
+            validated['CONCURRENT_ARTICLES_PROCESSING'], "CONCURRENT_ARTICLES_PROCESSING", 1, 100)
+    
     # Validate TOPICS
     if 'TOPICS' in validated:
         topics = validated['TOPICS']

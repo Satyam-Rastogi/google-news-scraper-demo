@@ -35,6 +35,11 @@ class Config:
     FAILURE_THRESHOLD: int = 5  # Number of failures before circuit breaker opens
     RECOVERY_TIMEOUT: int = 60  # Seconds to wait before trying again after circuit breaker opens
     
+    # Concurrency settings
+    CONCURRENT_REQUESTS_LIMIT: int = 100  # Maximum concurrent requests
+    CONCURRENT_REQUESTS_PER_HOST: int = 30  # Maximum concurrent requests per host
+    CONCURRENT_ARTICLES_PROCESSING: int = 10  # Maximum concurrent articles processing
+    
     # Topics for scheduled collection
     TOPICS: List[str] = [
         "artificial intelligence",

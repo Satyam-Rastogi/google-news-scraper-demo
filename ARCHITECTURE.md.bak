@@ -38,17 +38,6 @@ Key Functions:
 - `validate_queries()`: Validates search queries
 - Helper functions for formatting and display
 
-### src/core/async_main.py
-**Async main entry point for the News Collector application**
-
-Key Functions:
-- `main_async()`: Async entry point that parses command-line arguments and initiates collection
-- `main_cli_async()`: Async main CLI function for interactive use
-- `collect_news_task_async()`: Async task function to collect news for a specific query
-- `collect_news_for_all_topics_async()`: Collects news for all configured topics asynchronously
-- `run_scheduler_async()`: Runs the news collection scheduler asynchronously
-- Helper functions for async formatting and display
-
 ### src/core/scheduler.py
 **Scheduler implementation for automated news collection**
 
@@ -73,13 +62,6 @@ Key Functions:
 - `GoogleNewsScraper.search()`: Searches Google News for articles based on a query
 - `GoogleNewsScraper._make_request()`: Makes HTTP requests with retry logic
 
-### src/scrapers/async_scraper.py
-**Async Google News search scraper**
-
-Key Functions:
-- `AsyncGoogleNewsScraper.search()`: Searches Google News for articles based on a query asynchronously
-- Uses aiohttp for async HTTP requests with connection pooling
-
 ### src/scrapers/parser.py
 **HTML parser for Google News search results**
 
@@ -100,16 +82,6 @@ Key Functions:
 - `save_articles()`: Saves articles to file in specified format (JSON/CSV)
 - `create_full_article_data()`: Creates standardized full article data structure
 
-### src/scrapers/async_article_processor.py
-**Async orchestrator for article collection and processing**
-
-Key Functions:
-- `collect_news_async()`: Main async function that orchestrates the entire collection process
-- `collect_full_articles_async()`: Collects full article content for top articles asynchronously
-- `collect_images_async()`: Collects images for all articles based on image mode asynchronously
-- `save_articles_async()`: Saves articles to file in specified format (JSON/CSV) asynchronously
-- Uses asyncio.gather() for concurrent processing of multiple articles
-
 ### src/scrapers/article_scraper.py
 **Full article content scraper using multiple approaches**
 
@@ -119,15 +91,6 @@ Key Functions:
 - `ArticleScraper.scrape_article_simplified()`: Secondary fallback with simplified parsing
 - `ArticleScraper.clean_text()`: Cleans extracted text by removing unwanted content
 - Helper functions for request delays and user agent rotation
-
-### src/scrapers/async_article_scraper.py
-**Async full article content scraper using multiple approaches**
-
-Key Functions:
-- `AsyncArticleScraper.scrape_article()`: Primary async method using newspaper3k library
-- `AsyncArticleScraper.scrape_article_with_readability()`: Async fallback method using readability
-- `AsyncArticleScraper.scrape_article_simplified()`: Async secondary fallback with simplified parsing
-- Uses asyncio for concurrent execution and thread pools for CPU-bound operations
 
 ### src/scrapers/full_article_scraper.py
 **High-level full article scraper with image processing**
@@ -139,16 +102,6 @@ Key Functions:
   - Handles image downloading based on image mode
   - Saves article text and generates Markdown files
 
-### src/scrapers/async_full_article_scraper.py
-**Async high-level full article scraper with image processing**
-
-Key Functions:
-- `AsyncFullArticleScraper.scrape_full_article()`: Main async function for scraping full articles
-  - Decodes Google News URLs using multiple approaches asynchronously
-  - Scrapes article content with fallback mechanisms concurrently
-  - Handles image downloading based on image mode with concurrent downloads
-  - Saves article text and generates Markdown files asynchronously
-
 ### src/scrapers/google_news_decoder.py
 **Google News URL decoder with multiple fallback approaches**
 
@@ -158,28 +111,12 @@ Key Functions:
   - Custom URL resolver (fallback)
 - Integrates with external googlenewsdecoder package
 
-### src/scrapers/async_google_news_decoder.py
-**Async Google News URL decoder with multiple fallback approaches**
-
-Key Functions:
-- `decode_google_news_url_async()`: Decodes Google News URLs asynchronously using:
-  - gnewsdecoder library (primary)
-  - Custom async URL resolver (fallback)
-- Uses asyncio for concurrent execution of multiple decoding methods
-
 ### src/scrapers/url_resolver.py
 **Custom URL resolver for Google News redirects**
 
 Key Functions:
 - `resolve_google_news_url()`: Resolves Google News redirect URLs using requests
 - Helper functions for parameter extraction and URL construction
-
-### src/scrapers/async_url_resolver.py
-**Async custom URL resolver for Google News redirects**
-
-Key Functions:
-- `resolve_google_news_url_async()`: Resolves Google News redirect URLs using aiohttp
-- Helper functions for parameter extraction and URL construction with async HTTP requests
 
 ## Utility Modules
 
@@ -193,14 +130,6 @@ Key Functions:
 - `save_article_text()`: Saves full article text to a file
 - `_download_image_with_retry()`: Internal function with retry logic
 - `_resolve_url_with_selenium()`: Internal Selenium resolution function
-
-### src/utils/async_utils.py
-**Async utility functions used across the application**
-
-Key Functions:
-- `download_image_async()`: Downloads images and saves them locally asynchronously
-- `save_article_text_async()`: Saves full article text to a file asynchronously
-- Uses aiohttp for async HTTP requests and aiofiles for async file operations
 
 ### src/utils/validation.py
 **Input validation functions**
@@ -236,15 +165,6 @@ Key Functions:
   - Includes metadata, images, and content
   - Creates proper file paths and formatting
 
-### src/utils/async_http_client.py
-**Async HTTP client with connection pooling**
-
-Key Components:
-- `AsyncHTTPClient`: Async HTTP client with connection pooling using aiohttp
-- `get_global_async_http_client()`: Gets or creates a global async HTTP client instance
-- Implements connection pooling with configurable limits
-- Uses aiohttp's built-in connection pooling and keep-alive
-
 ## Configuration
 
 ### config/config.py
@@ -254,10 +174,6 @@ Key Functions:
 - `Config.load_from_file()`: Loads configuration from settings.cfg
 - Defines all configuration parameters as class attributes
 - Handles parsing of different data types (strings, integers, booleans, arrays)
-- New async-specific configuration parameters:
-  - `CONCURRENT_REQUESTS_LIMIT`: Maximum concurrent requests
-  - `CONCURRENT_REQUESTS_PER_HOST`: Maximum connections per host
-  - `CONCURRENT_ARTICLES_PROCESSING`: Maximum concurrent articles processing
 
 ### config/settings.cfg
 **Main configuration file**
@@ -269,10 +185,6 @@ Contains settings for:
 - Image scraping settings
 - Retry mechanism settings
 - Scheduled collection topics
-- Async concurrency settings:
-  - `CONCURRENT_REQUESTS_LIMIT`
-  - `CONCURRENT_REQUESTS_PER_HOST`
-  - `CONCURRENT_ARTICLES_PROCESSING`
 
 ## Scripts
 
@@ -335,17 +247,6 @@ Key Components:
 7. **Save**: Articles saved in JSON/CSV format with enhanced data structure
 8. **Schedule**: Scheduler manages automated collection tasks
 
-## Async Data Flow
-
-1. **User Input**: Command-line arguments or configuration files
-2. **Concurrent Search**: AsyncGoogleNewsScraper searches Google News for multiple topics concurrently
-3. **Parse**: ArticleParser extracts article data from HTML
-4. **Concurrent Process**: AsyncArticleProcessor orchestrates full article scraping and image downloading concurrently
-5. **Concurrent Full Scrape**: AsyncArticleScraper extracts complete article content with concurrent fallback mechanisms
-6. **Concurrent URL Decode**: AsyncGoogleNewsDecoder resolves redirect URLs concurrently
-7. **Concurrent Save**: Articles saved in JSON/CSV format with enhanced data structure concurrently
-8. **Schedule**: Scheduler manages automated collection tasks
-
 ## Error Handling
 
 The application implements multiple layers of error handling:
@@ -362,4 +263,3 @@ The application implements multiple layers of error handling:
 - **Factory Pattern**: Different image handling modes
 - **Circuit Breaker Pattern**: Failure prevention
 - **Singleton Pattern**: Configuration management
-- **Async Pattern**: Concurrent execution with asyncio and connection pooling
