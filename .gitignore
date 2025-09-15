@@ -191,4 +191,4 @@ gnews/**/*.pyc
 gnews/**/__pycache__/
 
 # Ignore documentation build files
-docs/_build/
+docs/_build/  
