@@ -49,3 +49,5 @@ gnews/*.egg-info/
 gnews/**/*.pyc
 gnews/**/__pycache__/
 docs/_build/
+temp_docs/
+utils/

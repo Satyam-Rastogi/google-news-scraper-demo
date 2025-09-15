@@ -59,5 +59,5 @@ COPY . .
 # Expose port for any web interface (if needed in the future)
 EXPOSE 8000
 
-# Set the entry point
-ENTRYPOINT ["python", "src/core/main.py"]
+# Set the entry point to the async version
+ENTRYPOINT ["python", "src/core/async_main.py"]

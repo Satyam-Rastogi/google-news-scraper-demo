@@ -3,8 +3,8 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "async-news-scraper"
-version = "2.0.0"
+name = "google-news-scraper"
+version = "2.1.0"
 description = "An asynchronous news article collection system that scrapes Google News for specified topics"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -23,6 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -43,12 +45,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Satyam-Rastogi/async_news_scraper"
-Repository = "https://github.com/Satyam-Rastogi/async_news_scraper"
-Issues = "https://github.com/Satyam-Rastogi/async_news_scraper/issues"
+Homepage = "https://github.com/Satyam-Rastogi/google-news-scraper-demo"
+Repository = "https://github.com/Satyam-Rastogi/google-news-scraper-demo"
+Issues = "https://github.com/Satyam-Rastogi/google-news-scraper-demo/issues"
 
 [project.scripts]
-news-collector = "src.core.main:main"
+news-collector = "src.core.async_main:main"
 
 [tool.setuptools.packages.find]
-exclude = ["tests*", "data*", "venv*"]
+exclude = ["tests*", "data*", "venv*", "temp_docs*", "utils*"]
