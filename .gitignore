@@ -143,25 +143,21 @@ ehthumbs.db
 Thumbs.db
 
 # Markdown files (excluding main README.md and ARCHITECTURE.md)
+temp_docs/
+*_summary.md
+*_plan.md
+*_report.md
 CHANGELOG.md
-code_quality_analysis_summary.md
-code_quality_improvement_plan.md
 CONTRIBUTING.md
 DEVELOPMENT.md
-Features_to_Add_and_Update.md
-FINAL_IMAGE_ENHANCEMENT_SUMMARY.md
-FINAL_IMPLEMENTATION_SUMMARY.md
-IMPLEMENTATION_SUMMARY_FINAL.md
-IMPLEMENTATION_SUMMARY.md
-MANUAL_TESTING_PLAN.md
-MANUAL_TESTING_SUMMARY.md
-plan.md
-PROJECT_IMPLEMENTATION_SUMMARY.md
-PROJECT_SUMMARY.md
-refactoring_summary.md
-async_plan.md 
-async_opportunities_summary.md
 Features_to_Add.md
+Features_to_Add_and_Update.md
+FINAL_*.md
+IMPLEMENTATION_*.md
+MANUAL_*.md
+PROJECT_*.md
+async_*.md
+refactoring_summary.md
 
 
 # License files (excluding main LICENSE file)
