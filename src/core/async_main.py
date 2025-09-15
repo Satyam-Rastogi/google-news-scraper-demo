@@ -1,0 +1,486 @@
+#!/usr/bin/env python3
+"""
+Unified News Collector CLI (Async Version)
+A comprehensive command-line interface for collecting, processing, and scheduling news article collection using async operations.
+"""
+
+import sys
+import os
+import argparse
+import asyncio
+from datetime import datetime
+import shutil
+import logging
+from typing import List, Optional
+
+# Add the parent directory to the sys.path to allow imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
+
+from src.scrapers.async_article_processor import collect_news_async
+from config.config import Config
+from src.utils.utils import setup_logging, setup_file_only_logging
+from src.utils.async_http_client import close_global_async_http_client
+from src.core.news_types import ArticleDict
+from src.utils.validation import validate_string, validate_integer_range, validate_search_query
+from src.core.scheduler import NewsScheduler
+
+# Load configuration from file
+try:
+    Config.load_from_file()
+except ValueError as e:
+    print(f"Configuration error: {e}")
+    sys.exit(1)
+
+# Set up logging
+logger = setup_logging(Config.LOG_LEVEL, log_to_console=True)
+
+def get_terminal_width() -> int:
+    """Get terminal width for formatting"""
+    try:
+        return shutil.get_terminal_size().columns
+    except:
+        return 80
+
+def print_header(title: str) -> None:
+    """Print a formatted header"""
+    width = get_terminal_width()
+    print("\n" + "=" * width)
+    print(f"{title:^{width}}")
+    print("=" * width)
+
+def print_section_header(title: str) -> None:
+    """Print a formatted section header"""
+    width = get_terminal_width()
+    print(f"\n{title}")
+    print("-" * min(len(title), width))
+
+def print_article_summary(index: int, article: ArticleDict) -> None:
+    """Print a formatted article summary"""
+    print(f"\n{index}. {article.get('title', 'N/A')}")
+    
+    # Print metadata
+    snippet = article.get('snippet', 'N/A')
+    if snippet and snippet != 'N/A':
+        # Truncate snippet to fit terminal width
+        width = get_terminal_width()
+        max_snippet_length = width - 8  # Account for indentation
+        if len(snippet) > max_snippet_length:
+            snippet = snippet[:max_snippet_length-3] + "..."
+        print(f"   Summary: {snippet}")
+    
+    # Print source and date
+    source = article.get('source', 'N/A') if article.get('source') else 'N/A'
+    published_time = article.get('published_time', 'N/A')
+    if source != 'N/A' or published_time != 'N/A':
+        source_info: List[str] = []
+        if source != 'N/A':
+            source_info.append(source)
+        if published_time != 'N/A':
+            source_info.append(published_time)
+        if source_info:
+            print(f"   Source: {' | '.join(source_info)}")
+    
+    # Print full content availability
+    if 'full_content' in article:
+        full_content = article['full_content']
+        if isinstance(full_content, dict):
+            print(f"   Full content: [Available]")
+            if full_content.get('authors'):
+                authors = ', '.join(full_content['authors'])
+                print(f"   Authors: {authors}")
+            if full_content.get('publish_date'):
+                print(f"   Publish Date: {full_content['publish_date']}")
+            if full_content.get('local_article_file'):
+                print(f"   Saved to: {os.path.basename(full_content['local_article_file'])}")
+        else:
+            print(f"   Full content: [Not available]")
+
+def display_articles_summary(articles: List[ArticleDict], query: str) -> None:
+    """Display a formatted summary of articles"""
+    if not articles:
+        return
+    
+    print_section_header(f"Search Results for: '{query}'")
+    print(f"Total articles found: {len(articles)}")
+    
+    # Display articles based on configuration
+    display_count = min(10, len(articles))  # Show up to 10 articles
+    
+    if Config.SCRAPE_FULL_ARTICLES:
+        display_count = min(Config.FULL_ARTICLES_COUNT, len(articles))
+        logger.info(f"Full content scraped for top {display_count} articles")
+    
+    for i, article in enumerate(articles[:display_count]):
+        print_article_summary(i+1, article)
+    
+    if len(articles) > display_count:
+        remaining = len(articles) - display_count
+        print(f"\n... and {remaining} more articles")
+        print("(Check the saved files for complete results)")
+
+def validate_queries(queries: List[str]) -> List[str]:
+    """
+    Validate a list of queries
+    
+    Args:
+        queries (List[str]): List of queries to validate
+        
+    Returns:
+        List[str]: List of validated queries
+        
+    Raises:
+        ValueError: If any query is invalid
+    """
+    if not queries:
+        raise ValueError("At least one query is required")
+    
+    validated_queries = []
+    for i, query in enumerate(queries):
+        try:
+            validated_query = validate_search_query(query)
+            validated_queries.append(validated_query)
+        except ValueError as e:
+            raise ValueError(f"Invalid query at position {i+1}: {str(e)}")
+    
+    return validated_queries
+
+async def collect_news_task_async(query: str) -> List[ArticleDict]:
+    """Task function to collect news for a specific query asynchronously"""
+    logger.info(f"Starting scheduled news collection for: {query}")
+    
+    try:
+        # Validate query
+        validated_query = validate_search_query(query)
+        
+        # Collect news using our unified async function
+        articles: List[ArticleDict] = await collect_news_async(validated_query)
+        
+        if articles:
+            logger.info(f"Collected {len(articles)} articles for '{validated_query}'")
+        else:
+            logger.warning(f"No articles found for '{validated_query}'")
+            
+        return articles
+    except ValueError as e:
+        logger.error(f"Invalid query '{query}': {e}")
+    except Exception as e:
+        logger.error(f"Error collecting news for '{query}': {e}")
+    
+    return []
+
+async def collect_news_for_all_topics_async() -> None:
+    """Task function to collect news for all configured topics asynchronously"""
+    logger.info("Starting scheduled news collection for all configured topics")
+    
+    tasks = [collect_news_task_async(topic) for topic in Config.TOPICS]
+    await asyncio.gather(*tasks)
+
+async def run_scheduler_async(query: Optional[str], interval_minutes: int, daily: bool, hour: int, minute: int) -> None:
+    """
+    Run the news collection scheduler asynchronously
+    
+    Args:
+        query: Specific query to collect news for (None for all configured topics)
+        interval_minutes: Interval for periodic tasks
+        daily: Whether to run daily instead of periodically
+        hour: Hour for daily execution
+        minute: Minute for daily execution
+    """
+    # Set up file-only logging for scheduler
+    scheduler_logger = setup_file_only_logging(Config.LOG_LEVEL)
+    
+    # Determine which topics to collect news for
+    if query:
+        # Use provided query
+        async def task() -> None:
+            await collect_news_task_async(query)
+    else:
+        # Use all configured topics
+        async def task() -> None:
+            await collect_news_for_all_topics_async()
+    
+    # Set up scheduler
+    scheduler = NewsScheduler()
+    
+    if daily:
+        scheduler.schedule_daily_task(task, hour, minute)
+    else:
+        scheduler.schedule_task(task, interval_minutes)
+
+async def main_cli_async(queries: Optional[List[str]] = None, output_format: Optional[str] = None, 
+                         limit: Optional[int] = None, image_mode: Optional[str] = None) -> None:
+    """Main CLI function for interactive use with async operations"""
+    # Validate queries - if no queries provided, use a general news query
+    if not queries:
+        logger.info("No query provided. Fetching general news from Google News.")
+        queries = ["latest news"]  # Use general news query instead of empty
+    
+    try:
+        validated_queries = validate_queries(queries)
+    except ValueError as e:
+        logger.error(f"Invalid queries: {e}")
+        return
+    
+    width = get_terminal_width()
+    print_header("NEWS COLLECTOR (ASYNC)")
+    print(f"{'Starting async news collection process':^{width}}")
+    
+    # Collect news for each query concurrently
+    tasks = [
+        collect_news_async(query, output_format, limit=limit, image_mode=image_mode)
+        for query in validated_queries
+    ]
+    
+    # Wait for all tasks to complete
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Process results
+    all_articles: List[ArticleDict] = []
+    for i, (query, result) in enumerate(zip(validated_queries, results)):
+        if isinstance(result, Exception):
+            logger.error(f"Error collecting news for '{query}': {result}")
+            continue
+            
+        articles: List[ArticleDict] = result
+        display_articles_summary(articles, query)
+        all_articles.extend(articles)
+    
+    # Print final summary
+    print_header("COMPLETED")
+    total_articles = len(all_articles)
+    print(f"{'Final Summary':^{width}}")
+    print(f"{'':^{width}}")
+    print(f"{'Total Queries Processed:':<30} {len(validated_queries)}")
+    print(f"{'Total Articles Collected:':<30} {total_articles}")
+    if Config.SCRAPE_FULL_ARTICLES:
+        full_articles = sum(1 for article in all_articles if 'full_content' in article)
+        print(f"{'Full Articles Scraped:':<30} {full_articles}")
+    print(f"{'Output Format:':<30} {output_format or Config.OUTPUT_FORMAT}")
+    print(f"{'Output Directory:':<30} {Config.OUTPUT_DIR}")
+    print(f"{'':^{width}}")
+    print(f"{'News collection completed successfully!':^{width}}")
+
+def get_user_input(prompt: str) -> str:
+    """Get user input with prompt"""
+    try:
+        return input(prompt).strip()
+    except KeyboardInterrupt:
+        logger.info("Operation interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Error getting user input: {e}")
+        return ""
+
+async def main_async() -> None:
+    parser = argparse.ArgumentParser(
+        description="Collect news articles from Google News with optional scheduling (Async Version)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Interactive collection
+  python async_news_collector.py "artificial intelligence"
+  python async_news_collector.py "AI,ML,Data Science" --format csv
+  python async_news_collector.py "climate change" --full-articles --full-count 5
+  
+  # Scheduled collection
+  python async_news_collector.py "machine learning" --schedule --interval 30
+  python async_news_collector.py --schedule --daily --hour 9 --minute 0
+  python async_news_collector.py "technology" --schedule --daily --hour 10 --minute 30 --full-articles --full-count 2
+        """
+    )
+    
+    # Mode selection arguments
+    parser.add_argument("--news", "-n", action="store_true", help="Fetch only news (default behavior)")
+    parser.add_argument("--weather", "-w", action="store_true", help="Fetch only weather")
+    parser.add_argument("--nw", action="store_true", help="Fetch both news and weather")
+    
+    # Query arguments
+    parser.add_argument("queries", nargs="*", help="The search query/queries for news articles (comma-separated for multiple). If no query is provided, fetches from Google News homepage.")
+    
+    # Output format arguments
+    parser.add_argument("--format", "-f", choices=['json', 'csv'], 
+                        help="Output format (json or csv)")
+    
+    # Article limit argument
+    parser.add_argument("--limit", type=int, default=Config.DEFAULT_ARTICLE_LIMIT,
+                        help=f"Maximum number of articles to collect (default: {Config.DEFAULT_ARTICLE_LIMIT})")
+    
+    # Image scraping arguments
+    parser.add_argument("--images", choices=['url-only', 'download', 'both'], 
+                        help=f"Enable image scraping with mode: url-only, download, or both")
+    
+    # Full article scraping arguments
+    parser.add_argument("--full-articles", action="store_true",
+                        help="Enable full article scraping for top articles")
+    parser.add_argument("--no-full-articles", action="store_false", dest="full_articles",
+                        help="Disable full article scraping")
+    parser.add_argument("--full-count", type=int, default=3,
+                        help="Number of top articles to scrape fully (default: 3)")
+    
+    # Scheduling arguments
+    parser.add_argument("--schedule", "-s", action="store_true",
+                        help="Run as a scheduled task instead of one-time collection")
+    parser.add_argument("--interval", "-i", type=int, default=Config.SCHEDULER_INTERVAL_MINUTES, 
+                        help=f"Interval in minutes for periodic tasks (default: {Config.SCHEDULER_INTERVAL_MINUTES})")
+    parser.add_argument("--daily", "-d", action="store_true",
+                        help="Run daily instead of at intervals")
+    parser.add_argument("--hour", type=int, default=Config.SCHEDULER_DAILY_HOUR,
+                        help=f"Hour for daily run (0-23, default: {Config.SCHEDULER_DAILY_HOUR})")
+    parser.add_argument("--minute", type=int, default=Config.SCHEDULER_DAILY_MINUTE,
+                        help=f"Minute for daily run (0-59, default: {Config.SCHEDULER_DAILY_MINUTE})")
+    
+    args = parser.parse_args()
+    
+    # Validate mode selection - only one of --news, --weather, or --nw can be specified
+    mode_flags = [args.news, args.weather, args.nw]
+    if sum(mode_flags) > 1:
+        parser.error("Only one of --news, --weather, or --nw can be specified")
+    
+    # Determine mode - default to news if no mode flags are specified
+    if args.nw:
+        mode = "both"
+    elif args.weather:
+        mode = "weather"
+    else:
+        mode = "news"  # default
+    
+    # Validate numeric arguments
+    try:
+        if args.hour is not None:
+            args.hour = validate_integer_range(args.hour, "Hour", 0, 23)
+        if args.minute is not None:
+            args.minute = validate_integer_range(args.minute, "Minute", 0, 59)
+        if args.interval is not None:
+            args.interval = validate_integer_range(args.interval, "Interval", 1, 1440)
+        if args.full_count is not None:
+            args.full_count = validate_integer_range(args.full_count, "Full count", 1, 50)
+    except ValueError as e:
+        logger.error(f"Invalid argument: {e}")
+        sys.exit(1)
+    
+    # Handle command-line arguments for full article scraping
+    if hasattr(args, 'full_articles') and args.full_articles:
+        Config.SCRAPE_FULL_ARTICLES = True
+    if args.full_count:
+        Config.FULL_ARTICLES_COUNT = args.full_count
+    if args.format:
+        Config.OUTPUT_FORMAT = args.format
+    
+    # Handle command-line arguments for image scraping
+    if args.images:
+        Config.SCRAPE_IMAGES = True
+        Config.IMAGE_SCRAPE_MODE = args.images
+    
+    # Handle both space-separated and comma-separated queries
+    queries: List[str] = []
+    if args.queries:
+        for query in args.queries:
+            # Split by comma if there are multiple queries in one argument
+            queries.extend([q.strip() for q in query.split(',')])
+    
+    # Run as scheduler or one-time collection
+    if args.schedule:
+        # Scheduler mode
+        query = queries[0] if queries else None
+        await run_scheduler_async(query, args.interval, args.daily, args.hour, args.minute)
+    else:
+        # One-time collection mode
+        if mode == "weather":
+            # For weather mode, collect weather data
+            # If no queries provided, prompt user for city
+            if not queries:
+                city = get_user_input("Enter city name for weather collection: ")
+                if not city:
+                    logger.error("City name is required for weather collection")
+                    sys.exit(1)
+                queries = [city]
+            
+            # Import weather modules here to avoid circular imports
+            try:
+                from src.scrapers.weather_scraper import collect_weather
+                from src.scrapers.weather_processor import save_weather_data, display_weather_summary
+            except ImportError as e:
+                logger.error(f"Error importing weather modules: {e}")
+                sys.exit(1)
+            
+            # Collect weather for each city
+            for city in queries:
+                logger.info(f"Collecting weather data for: {city}")
+                weather_data = collect_weather(city)
+                if weather_data:
+                    display_weather_summary(weather_data)
+                    save_weather_data(weather_data, city, args.format)
+                else:
+                    logger.error(f"Failed to collect weather data for: {city}")
+            
+            print_header("WEATHER COLLECTION COMPLETED")
+            width = get_terminal_width()
+            print(f"{'Weather collection completed successfully!':^{width}}")
+            
+        elif mode == "both":
+            # For both mode, first collect news then weather
+            # Prompt user for news query
+            if not queries:
+                news_query = get_user_input("Enter your CLI query for news: ")
+                if news_query:
+                    queries = [news_query]
+            
+            # Process news
+            if queries:
+                await main_cli_async(queries, args.format, args.limit, args.images)
+            
+            # Prompt user for weather query
+            weather_city = get_user_input("Enter your CLI query for weather: ")
+            if weather_city:
+                # Import weather modules here to avoid circular imports
+                try:
+                    from src.scrapers.weather_scraper import collect_weather
+                    from src.scrapers.weather_processor import save_weather_data, display_weather_summary
+                except ImportError as e:
+                    logger.error(f"Error importing weather modules: {e}")
+                    sys.exit(1)
+                
+                # Collect weather
+                logger.info(f"Collecting weather data for: {weather_city}")
+                weather_data = collect_weather(weather_city)
+                if weather_data:
+                    display_weather_summary(weather_data)
+                    save_weather_data(weather_data, weather_city, args.format)
+                else:
+                    logger.error(f"Failed to collect weather data for: {weather_city}")
+            
+            print_header("NEWS AND WEATHER COLLECTION COMPLETED")
+            width = get_terminal_width()
+            print(f"{'News and weather collection completed successfully!':^{width}}")
+            
+        else:
+            # News mode (default)
+            await main_cli_async(queries, args.format, args.limit, args.images)
+    
+    # Close the global async HTTP client
+    await close_global_async_http_client()
+
+def main() -> None:
+    """Main entry point"""
+    try:
+        # Run the async main function
+        asyncio.run(main_async())
+    except KeyboardInterrupt:
+        logger.info("News collection interrupted by user")
+        # Close the global async HTTP client
+        try:
+            asyncio.run(close_global_async_http_client())
+        except:
+            pass
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        # Close the global async HTTP client
+        try:
+            asyncio.run(close_global_async_http_client())
+        except:
+            pass
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
